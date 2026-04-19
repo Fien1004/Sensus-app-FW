@@ -1,9 +1,16 @@
 <script setup>
 import { ref } from 'vue'
 import BaseInput from '../components/base/BaseInput.vue'
+import BaseSelect from '../components/base/BaseSelect.vue'
 
 const inputValue = ref('')
-const errorValue = ref('')
+const selectedAge = ref('')
+
+const ageOptions = [
+  { value: '15-17', label: '15 tot 17 jaar' },
+  { value: '18-20', label: '18 tot 20 jaar' },
+  { value: '21-24', label: '21 tot 24 jaar' },
+]
 </script>
 
 <template>
@@ -16,41 +23,11 @@ const errorValue = ref('')
         placeholder="Default"
       />
 
-      <BaseInput
-        v-model="inputValue"
-        placeholder="Placeholder"
-        pill
+      <BaseSelect
+        v-model="selectedAge"
+        :options="ageOptions"
+        placeholder="Kies je leeftijd"
       />
-
-      <BaseInput
-        v-model="errorValue"
-        placeholder="Error"
-        error
-      />
-
-      <BaseInput
-        v-model="inputValue"
-        placeholder="Disabled"
-        disabled
-      />
-
-      <BaseInput
-        v-model="inputValue"
-        placeholder="Zoeken"
-      >
-        <template #leftIcon>
-          🔍
-        </template>
-      </BaseInput>
-
-      <BaseInput
-        v-model="inputValue"
-        placeholder="Wachtwoord"
-      >
-        <template #rightIcon>
-          👁
-        </template>
-      </BaseInput>
     </div>
   </main>
 </template>

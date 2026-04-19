@@ -54,6 +54,9 @@
   --text-lg: 18px;
   --text-xl: 24px;
   --text-2xl: 32px;
+  --font-size-h1: 1.75rem;
+  --font-size-h2: 1.5rem;
+
 
   /* Spacing */
   --space-1: 4px;

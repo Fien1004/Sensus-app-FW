@@ -1,0 +1,17 @@
+@import './tokens.css';
+@import './base.css';
+
+.page {
+  min-height: 100vh;
+  padding: var(--space-7) var(--space-5);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+h1 {
+  margin-bottom: var(--space-3);
+}

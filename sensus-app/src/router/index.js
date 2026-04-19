@@ -1,6 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import ProfileView from '../views/ProfileView.vue'
+import WarningView from '../views/WarningView.vue'
+import ScenarioListView from '../views/ScenarioListView.vue'
+import ScenarioIntroView from '../views/ScenarioIntroView.vue'
 import ScenarioView from '../views/ScenarioView.vue'
+import ReflectionView from '../views/ReflectionView.vue'
+import EndView from '../views/EndView.vue'
+import SafeExitView from '../views/SafeExitView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,9 +18,44 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: '/profiel',
+      name: 'profile',
+      component: ProfileView,
+    },
+    {
+      path: '/waarschuwing',
+      name: 'warning',
+      component: WarningView,
+    },
+    {
+      path: '/scenarios',
+      name: 'scenario-list',
+      component: ScenarioListView,
+    },
+    {
+      path: '/scenario/:id/intro',
+      name: 'scenario-intro',
+      component: ScenarioIntroView,
+    },
+    {
       path: '/scenario/:id',
       name: 'scenario',
       component: ScenarioView,
+    },
+    {
+      path: '/scenario/:id/reflectie',
+      name: 'reflection',
+      component: ReflectionView,
+    },
+    {
+      path: '/scenario/:id/einde',
+      name: 'end',
+      component: EndView,
+    },
+    {
+      path: '/safe-exit',
+      name: 'safe-exit',
+      component: SafeExitView,
     },
   ],
 })

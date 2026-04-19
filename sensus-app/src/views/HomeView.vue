@@ -1,33 +1,56 @@
 <script setup>
-import BaseButton from '../components/base/BaseButton.vue'
+import { ref } from 'vue'
+import BaseInput from '../components/base/BaseInput.vue'
+
+const inputValue = ref('')
+const errorValue = ref('')
 </script>
 
 <template>
   <main class="page">
-    <div class="container">
+    <div class="container" style="max-width: 320px; display: grid; gap: 16px;">
       <h1>Sensus</h1>
 
-      <BaseButton variant="primary" size="md">
-        Start
-      </BaseButton>
+      <BaseInput
+        v-model="inputValue"
+        placeholder="Default"
+      />
 
-      <br><br>
+      <BaseInput
+        v-model="inputValue"
+        placeholder="Placeholder"
+        pill
+      />
 
-      <BaseButton variant="secondary" size="md">
-        Stoppen?
-      </BaseButton>
+      <BaseInput
+        v-model="errorValue"
+        placeholder="Error"
+        error
+      />
 
-      <br><br>
+      <BaseInput
+        v-model="inputValue"
+        placeholder="Disabled"
+        disabled
+      />
 
-      <BaseButton variant="tertiary" size="md">
-        Verder doen
-      </BaseButton>
+      <BaseInput
+        v-model="inputValue"
+        placeholder="Zoeken"
+      >
+        <template #leftIcon>
+          🔍
+        </template>
+      </BaseInput>
 
-      <br><br>
-
-      <BaseButton variant="danger" size="md">
-        Annuleren
-      </BaseButton>
+      <BaseInput
+        v-model="inputValue"
+        placeholder="Wachtwoord"
+      >
+        <template #rightIcon>
+          👁
+        </template>
+      </BaseInput>
     </div>
   </main>
 </template>

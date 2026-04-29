@@ -1,5 +1,436 @@
 {
-  "id": "consent-party-1",
-  "title": "Feest en grenzen",
-  "description": "Een eerste testsituatie voor het scenario."
+  "id": "online-gesprek-loopt-vast",
+  "title": "Online gesprek loopt vast",
+  "description": "Kort gesprek. Haar antwoorden blijven afstandelijk en kort.",
+  "theme": "Online gedrag",
+  "duration": "2–3 minuten",
+  "intro": {
+    "title": "Online gesprek loopt vast",
+    "description": "Kort gesprek. Haar antwoorden blijven afstandelijk en kort.",
+    "body": "Je verkent hoe jij reageert in een online gesprek dat niet vlot loopt.",
+    "button": "Start scenario",
+    "note": "Dit scenario duurt ongeveer 2–3 minuten."
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "type": "question",
+      "progress": 10,
+      "title": "Eerste contact",
+      "description": "Je hebt iemand toegevoegd op Instagram. Ze accepteert je verzoek. Je stuurt een eerste bericht. Haar antwoord is kort.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 13:14",
+          "sender": "you",
+          "text": "Hey, alles goed?"
+        },
+        {
+          "sender": "other",
+          "text": "Cv"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Enthousiast",
+          "next": "step-2"
+        },
+        {
+          "label": "Neutraal",
+          "next": "step-2"
+        },
+        {
+          "label": "Onzeker",
+          "next": "step-2"
+        },
+        {
+          "label": "Eigen input",
+          "next": "step-1-input"
+        }
+      ]
+    },
+    {
+      "id": "step-1-input",
+      "type": "question",
+      "progress": 10,
+      "title": "Eerste contact",
+      "description": "Je hebt iemand toegevoegd op Instagram. Ze accepteert je verzoek. Je stuurt een eerste bericht. Haar antwoord is kort.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 13:14",
+          "sender": "you",
+          "text": "Hey, alles goed?"
+        },
+        {
+          "sender": "other",
+          "text": "Cv"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "text",
+      "placeholder": "Het is een beetje droog.",
+      "next": "step-2"
+    },
+    {
+      "id": "step-2",
+      "type": "question",
+      "progress": 25,
+      "title": "Eerste signaal van afstand",
+      "description": "Je stuurt een nieuw bericht. Haar antwoord is opnieuw kort, en ze laat lang op zich wachten.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 13:36",
+          "sender": "you",
+          "text": "Wat ben je aan het doen?"
+        },
+        {
+          "time": "Vandaag 15:22",
+          "sender": "other",
+          "text": "Bwa, niks.."
+        }
+      ],
+      "question": "Hoe lees jij dit?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Ze is druk",
+          "next": "step-3"
+        },
+        {
+          "label": "Ze is niet echt geïnteresseerd",
+          "next": "step-3"
+        },
+        {
+          "label": "Geen idee",
+          "next": "step-3"
+        },
+        {
+          "label": "Eigen input",
+          "next": "step-2-input"
+        }
+      ]
+    },
+    {
+      "id": "step-2-input",
+      "type": "question",
+      "progress": 25,
+      "title": "Eerste signaal van afstand",
+      "description": "Je stuurt een nieuw bericht. Haar antwoord is opnieuw kort, en ze laat lang op zich wachten.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 13:36",
+          "sender": "you",
+          "text": "Wat ben je aan het doen?"
+        },
+        {
+          "time": "Vandaag 15:22",
+          "sender": "other",
+          "text": "Bwa, niks.."
+        }
+      ],
+      "question": "Hoe lees jij dit?",
+      "inputType": "text",
+      "placeholder": "Ik denk niet dat ze wilt praten",
+      "next": "step-3"
+    },
+    {
+      "id": "step-3",
+      "type": "choice",
+      "progress": 38,
+      "title": "Jouw eerste reactie",
+      "description": "Je merkt dat haar antwoorden kort blijven. Wat doe jij nu?",
+      "chatMessages": [
+        {
+          "time": "Vandaag 15:24",
+          "sender": "you",
+          "text": "Gewoon aan het niksen, moet kunnen hahaha :)"
+        },
+        {
+          "time": "Vandaag 15:36",
+          "sender": "other",
+          "text": "Hahaha"
+        }
+      ],
+      "question": "Kies wat jij zou doen.",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Ik stuur nog een bericht om het gesprek gaande te houden",
+          "next": "step-4a"
+        },
+        {
+          "label": "Ik laat even stilte vallen",
+          "next": "step-4b"
+        }
+      ],
+      "note": "Beide keuzes leiden naar een andere situatie."
+    },
+    {
+      "id": "step-4a",
+      "type": "continue",
+      "path": "A",
+      "progress": 50,
+      "title": "Je duwt het gesprek verder",
+      "description": "Je stuurt nog een bericht. Ze reageert helemaal niet.",
+      "chatMessages": [
+        {
+          "time": "Gisteren 22:48",
+          "sender": "you",
+          "text": "Anders kunnen we een keertje samen niksen hé ;)"
+        },
+        {
+          "status": "Gelezen"
+        }
+      ],
+      "button": "Volgende",
+      "next": "step-5a"
+    },
+    {
+      "id": "step-4b",
+      "type": "continue",
+      "path": "B",
+      "progress": 50,
+      "title": "Je stopt het gesprek",
+      "description": "Je verontschuldigd je. Je voelt dat de ander niet echt mee is.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 18:36",
+          "sender": "you",
+          "text": "Ik merk dat je niet echt interesse hebt in dit gesprek, helemaal oké natuurlijk. Sorry voor de spam :p"
+        }
+      ],
+      "button": "Volgende",
+      "next": "step-5b"
+    },
+    {
+      "id": "step-5a",
+      "type": "question",
+      "path": "A",
+      "progress": 62,
+      "title": "Je gevoel nu",
+      "description": "Het gesprek loopt niet zoals je had gehoopt.",
+      "chatMessages": [
+        {
+          "time": "Gisteren 22:48",
+          "sender": "you",
+          "text": "Anders kunnen we een keertje samen niksen hé ;)"
+        },
+        {
+          "status": "Gelezen"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Teleurstellend",
+          "next": "step-6a"
+        },
+        {
+          "label": "Frustrerend",
+          "next": "step-6a"
+        },
+        {
+          "label": "Verwarrend",
+          "next": "step-6a"
+        },
+        {
+          "label": "Eigen input",
+          "next": "step-5a-input"
+        }
+      ]
+    },
+    {
+      "id": "step-5a-input",
+      "type": "question",
+      "path": "A",
+      "progress": 62,
+      "title": "Je gevoel nu",
+      "description": "Het gesprek loopt niet zoals je had gehoopt.",
+      "chatMessages": [
+        {
+          "time": "Gisteren 22:48",
+          "sender": "you",
+          "text": "Anders kunnen we een keertje samen niksen hé ;)"
+        },
+        {
+          "status": "Gelezen"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "text",
+      "placeholder": "Ik vind het niet echt leuk dat ze niet meer antwoord",
+      "next": "step-6a"
+    },
+    {
+      "id": "step-5b",
+      "type": "question",
+      "path": "B",
+      "progress": 62,
+      "title": "Je emotie nu",
+      "description": "Je verontschuldigd je. Je voelt dat de ander niet echt mee is.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 18:36",
+          "sender": "you",
+          "text": "Ik merk dat je niet echt interesse hebt in dit gesprek, helemaal oké natuurlijk. Sorry voor de spam :p"
+        },
+        {
+          "sender": "other",
+          "text": "Dankje. Wordt gewaardeerd :)"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Opluchtend",
+          "next": "step-6b"
+        },
+        {
+          "label": "Teleurstellend",
+          "next": "step-6b"
+        },
+        {
+          "label": "Onzeker",
+          "next": "step-6b"
+        },
+        {
+          "label": "Eigen input",
+          "next": "step-5b-input"
+        }
+      ]
+    },
+    {
+      "id": "step-5b-input",
+      "type": "question",
+      "path": "B",
+      "progress": 62,
+      "title": "Je emotie nu",
+      "description": "Je verontschuldigd je. Je voelt dat de ander niet echt mee is.",
+      "chatMessages": [
+        {
+          "time": "Vandaag 18:36",
+          "sender": "you",
+          "text": "Ik merk dat je niet echt interesse hebt in dit gesprek, helemaal oké natuurlijk. Sorry voor de spam :p"
+        },
+        {
+          "sender": "other",
+          "text": "Dankje. Wordt gewaardeerd :)"
+        }
+      ],
+      "question": "Hoe voelt dit voor jou?",
+      "inputType": "text",
+      "placeholder": "Ik vind het goed dat ik het heb gezegd. Nu weet ze het en voel ik mij er niet schuldig over.",
+      "next": "step-6b"
+    },
+    {
+      "id": "step-6a",
+      "type": "choice",
+      "path": "A",
+      "progress": 75,
+      "title": "Jouw actie",
+      "description": "Het gesprek loopt niet zoals je had gehoopt.",
+      "chatMessages": [
+        {
+          "time": "Gisteren 22:48",
+          "sender": "you",
+          "text": "Anders kunnen we een keertje samen niksen hé ;)"
+        },
+        {
+          "status": "Gelezen"
+        }
+      ],
+      "question": "Wat stuur je nu?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Waarom reageer je zo weinig? Je kan toch gewoon iets sturen?",
+          "next": "step-7a"
+        },
+        {
+          "label": "Sorry, ik push denk ik te veel. Als je geen zin hebt om te praten is dat oké.",
+          "next": "step-7b"
+        }
+      ]
+    },
+    {
+      "id": "step-6b",
+      "type": "choice",
+      "path": "B",
+      "progress": 75,
+      "title": "Je merkt dat het gesprek niet in balans was",
+      "description": "Je merkt dat jullie energie en verwachtingen niet gelijk waren.",
+      "question": "Heb je spijt dat je een berichtje stuurde?",
+      "inputType": "choice",
+      "options": [
+        {
+          "label": "Ja",
+          "next": "step-7b"
+        },
+        {
+          "label": "Nee, ik leer hier uit",
+          "next": "step-7b"
+        }
+      ],
+      "note": "Kort of veel sturen zegt niet altijd iets over interesse. Soms lopen verwachtingen gewoon uiteen."
+    },
+    {
+      "id": "step-7a",
+      "type": "reflection",
+      "path": "A",
+      "progress": 88,
+      "title": "Relfectie",
+      "description": "Je zag de signalen en je nam verantwoordelijkheid. Het is niet makkelijk om online aan te voelen wat iemand wil. Je keuze toont inzicht.",
+      "question": "Wat wil je in de toekomst sneller herkennen?",
+      "inputType": "textarea",
+      "placeholder": "Vul hier je antwoord in.",
+      "button": "Volgende",
+      "next": "end-a"
+    },
+    {
+      "id": "step-7b",
+      "type": "reflection",
+      "path": "B",
+      "progress": 88,
+      "title": "Reflectie",
+      "description": "Je nam afstand en gaf jezelf en de ander ruimte. Dat is soms het beste wat je kan doen. Niet elk gesprek hoeft verder te gaan.",
+      "question": "Wat zou jou helpen in de toekomst?",
+      "inputType": "textarea",
+      "placeholder": "Vul hier je antwoord in.",
+      "button": "Volgende",
+      "next": "end-b"
+    },
+    {
+      "id": "end-a",
+      "type": "end",
+      "path": "A",
+      "progress": 100,
+      "title": "Je hebt het scenario afgerond!",
+      "description": "Goed gedaan! Je hebt scenario 1 succesvol afgerond. Bedankt voor je deelname.",
+      "extraText": "Heb je nog vragen? Aarzel niet om de moderator aan te spreken.",
+      "rememberTitle": "Onthoud dit",
+      "remember": [
+        "Als iemand niet reageert, kan dat betekenen dat die ruimte nodig heeft",
+        "Door even te stoppen geef je de ander die ruimte"
+      ],
+      "button": "Afronden"
+    },
+    {
+      "id": "end-b",
+      "type": "end",
+      "path": "B",
+      "progress": 100,
+      "title": "Je hebt het scenario afgerond!",
+      "description": "Goed gedaan! Je hebt scenario 1 succesvol afgerond. Bedankt voor je deelname.",
+      "extraText": "Heb je nog vragen? Aarzel niet om de moderator aan te spreken.",
+      "rememberTitle": "Onthoud dit",
+      "remember": [
+        "Door te stoppen geef je de ander ruimte",
+        "Dat zorgt voor een veilige en duidelijke situatie"
+      ],
+      "button": "Afronden"
+    }
+  ]
 }

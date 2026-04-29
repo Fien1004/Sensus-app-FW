@@ -8,7 +8,7 @@ import WarningIcon from '../assets/icons/shield-warning.svg'
 const router = useRouter()
 
 function goNext() {
-  router.push('/scenario-lijst')
+  router.push({ name: 'scenario-list' })
 }
 
 function goStop() {

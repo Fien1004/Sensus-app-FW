@@ -30,6 +30,7 @@ const router = createRouter({
     {
       path: '/scenarios',
       name: 'scenario-list',
+      alias: '/scenario-lijst',
       component: ScenarioListView,
     },
     {

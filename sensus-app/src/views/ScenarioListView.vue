@@ -38,12 +38,7 @@ const scenarioCards = [
 ]
 
 function goBack() {
-  if (window.history.length > 1) {
-    router.back()
-    return
-  }
-
-  router.push('/')
+  router.push('/waarschuwing')
 }
 
 function startScenario(scenario) {

@@ -49,7 +49,8 @@ const router = createRouter({
       component: ReflectionView,
     },
     {
-      path: '/scenario/:id/einde',
+      path: '/scenario/:id/end',
+      alias: '/scenario/:id/einde',
       name: 'end',
       component: EndView,
     },

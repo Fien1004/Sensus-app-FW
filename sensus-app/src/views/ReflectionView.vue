@@ -27,7 +27,7 @@ const progress = computed(() => reflectionStep.value?.progress ?? 0)
 const answer = ref('')
 
 function goSafeExit() {
-  router.push('/safe-exit')
+  router.push({ name: 'safe-exit', query: { returnTo: route.fullPath } })
 }
 
 function handleNext() {

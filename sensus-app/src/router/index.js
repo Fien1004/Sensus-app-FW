@@ -8,6 +8,8 @@ import ScenarioView from '../views/ScenarioView.vue'
 import ReflectionView from '../views/ReflectionView.vue'
 import EndView from '../views/EndView.vue'
 import SafeExitView from '../views/SafeExitView.vue'
+import StopConfirmView from '../views/StopConfirmView.vue'
+import ResumeScenarioView from '../views/ResumeScenarioView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -59,7 +61,23 @@ const router = createRouter({
       name: 'safe-exit',
       component: SafeExitView,
     },
+    {
+      path: '/stop-confirm',
+      name: 'stop-confirm',
+      component: StopConfirmView,
+    },
+    {
+      path: '/resume-scenario',
+      name: 'resume-scenario',
+      component: ResumeScenarioView,
+    },
   ],
+})
+
+router.afterEach((to) => {
+  if (to.path.startsWith('/scenario/')) {
+    localStorage.setItem('sensus_current_scenario_route', to.fullPath)
+  }
 })
 
 export default router

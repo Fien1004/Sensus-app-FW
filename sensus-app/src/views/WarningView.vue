@@ -1,18 +1,26 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 
 import WarningIcon from '../assets/icons/shield-warning.svg'
 
+const route = useRoute()
 const router = useRouter()
 
 function goNext() {
-  router.push({ name: 'scenario-list' })
+  const currentScenarioRoute = localStorage.getItem('sensus_current_scenario_route')
+
+  if (currentScenarioRoute) {
+    router.push('/resume-scenario')
+    return
+  }
+
+  router.push('/scenario-lijst')
 }
 
 function goStop() {
-  router.push('/safe-exit')
+  router.push({ name: 'safe-exit', query: { returnTo: route.fullPath } })
 }
 </script>
 

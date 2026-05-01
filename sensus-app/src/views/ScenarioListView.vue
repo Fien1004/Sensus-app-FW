@@ -1,58 +1,41 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-import { scenarios as scenarioData } from '../services/scenarioService'
+import { getScenarios } from '../services/scenarioService'
 
 const router = useRouter()
 
-const primaryScenario = scenarioData[0] ?? {
-  id: 'online-gesprek-loopt-vast',
-  title: 'Online gesprek loopt vast',
-  description: 'Je stuurt iemand berichten. Het gesprek komt maar moeilijk op gang.',
-  theme: 'Online gedrag',
-}
-
-const scenarioCards = [
-  {
-    id: primaryScenario.id,
-    title: primaryScenario.title,
-    description: 'Je stuurt iemand berichten. Het gesprek komt maar moeilijk op gang.',
-    theme: primaryScenario.theme ?? 'Online gedrag',
-    enabled: true,
-  },
-  {
-    id: 'situatie-op-een-feestje',
-    title: 'Situatie op een feestje',
-    description: 'Je bent op een feestje. Iemand komt dichter bij je staan en zoekt contact.',
-    theme: 'Sociale situatie',
-    enabled: false,
-  },
-  {
-    id: 'badkamer',
-    title: 'Badkamer',
-    description: 'Je jongere broertje komt de badkamer binnen als je aan het douchen bent.',
-    theme: 'Familie',
-    enabled: false,
-  },
-]
+const scenarios = ref([])
+const isLoading = ref(true)
 
 function goBack() {
   router.push('/waarschuwing')
 }
 
 function startScenario(scenario) {
-  if (!scenario.enabled) {
-    return
-  }
+  if (!scenario || !scenario.slug) return
 
   router.push({
     name: 'scenario-intro',
     params: {
-      id: scenario.id,
+      id: scenario.slug,
     },
   })
 }
+
+onMounted(async () => {
+  try {
+    const list = await getScenarios()
+    scenarios.value = list
+  } catch (err) {
+    console.error('Error loading scenarios:', err)
+    scenarios.value = []
+  } finally {
+    isLoading.value = false
+  }
+})
 </script>
 
 <template>
@@ -78,8 +61,15 @@ function startScenario(scenario) {
       </header>
 
       <div class="scenario-list__cards">
+        <div v-if="isLoading">Laden…</div>
+
+        <div v-else-if="!scenarios.length">
+          <p>Er zijn nog geen scenario’s beschikbaar.</p>
+        </div>
+
         <article
-          v-for="scenario in scenarioCards"
+          v-else
+          v-for="scenario in scenarios"
           :key="scenario.id"
           class="scenario-card"
         >
@@ -95,12 +85,15 @@ function startScenario(scenario) {
             <p class="scenario-card__theme">
               {{ scenario.theme }}
             </p>
+
+            <p v-if="scenario.duration" class="scenario-card__duration">
+              Duur: {{ scenario.duration }}
+            </p>
           </div>
 
           <BaseButton
             fullWidth
             size="lg"
-            :disabled="!scenario.enabled"
             @click="startScenario(scenario)"
           >
             Start
@@ -194,6 +187,13 @@ function startScenario(scenario) {
 .scenario-card__theme {
   margin-top: 8px;
   font-size: 0.95rem;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+}
+
+.scenario-card__duration {
+  margin-top: 6px;
+  font-size: 0.9rem;
   line-height: 1.3;
   color: var(--color-text-muted);
 }

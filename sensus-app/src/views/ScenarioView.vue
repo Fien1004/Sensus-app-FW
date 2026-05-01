@@ -4,17 +4,19 @@ import { useRoute, useRouter } from 'vue-router'
 import PenIcon from '../assets/icons/pen.svg'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-import { getScenarioById } from '../services/scenarioService'
+import { getScenarioBySlug } from '../services/scenarioService'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
+const slug = route.params.id
 const queryStep = computed(() => route.query?.step)
 const paramStep = computed(() => route.params?.step)
 
-const scenario = computed(() => getScenarioById(scenarioId.value))
+const scenario = ref(null)
+const isLoading = ref(true)
 
 const currentStepId = computed(() => {
   return paramStep.value ?? queryStep.value ?? scenario.value?.steps?.[0]?.id ?? null
@@ -57,7 +59,18 @@ async function startSession() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const s = await getScenarioBySlug(slug)
+    // Use engine_json as the scenario data for steps/intro
+    scenario.value = s?.engine_json ?? null
+  } catch (err) {
+    console.error(err)
+    scenario.value = null
+  } finally {
+    isLoading.value = false
+  }
+
   startSession()
 })
 
@@ -116,8 +129,19 @@ async function handleChoice(option) {
 
 function handleContinue() {
   const next = currentStep.value?.next
-  if (!next) return
-  navigateToStep(next)
+  if (!next) {
+    console.warn('Continue step has no next defined', currentStep.value?.id)
+    return
+  }
+
+  // Prefer slug from scenario meta when available, otherwise use route id
+  const routeId = scenario?.value?.slug ?? scenarioId.value
+
+  router.push({
+    name: 'scenario',
+    params: { id: routeId },
+    query: { step: next }
+  })
 }
 
 function handleTextNext() {
@@ -132,7 +156,11 @@ function handleTextNext() {
 <template>
   <ScreenContainer size="narrow">
     <section class="scenario-step">
-      <div v-if="!scenario">
+      <div v-if="isLoading">
+        <h1>Laden…</h1>
+      </div>
+
+      <div v-else-if="!scenario">
         <h1>Scenario niet gevonden</h1>
       </div>
 

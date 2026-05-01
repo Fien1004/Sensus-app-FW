@@ -1,34 +1,42 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-import { getScenarioById } from '../services/scenarioService'
+import { getScenarioBySlug } from '../services/scenarioService'
 
 const route = useRoute()
 const router = useRouter()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
-const scenario = computed(() => getScenarioById(scenarioId.value))
-const firstStep = computed(() => scenario.value?.steps?.[0] ?? null)
+const scenario = ref(null)
+const isLoading = ref(true)
+const intro = computed(() => scenario.value?.engine_json?.intro ?? null)
+const firstStep = computed(() => scenario.value?.engine_json?.steps?.[0] ?? null)
+
+onMounted(async () => {
+  try {
+    const s = await getScenarioBySlug(route.params.id)
+    scenario.value = s
+  } catch (err) {
+    console.error(err)
+    scenario.value = null
+  } finally {
+    isLoading.value = false
+  }
+})
 
 function goBack() {
   router.push('/scenario-lijst')
 }
 
 function startScenario() {
-  if (!scenario.value || !firstStep.value) {
-    return
-  }
+  if (!scenario.value || !firstStep.value) return
 
   router.push({
     name: 'scenario',
-    params: {
-      id: scenario.value.id,
-    },
-    query: {
-      step: firstStep.value.id,
-    },
+    params: { id: scenario.value.slug },
+    query: { step: firstStep.value.id },
   })
 }
 
@@ -49,18 +57,26 @@ function goSafeExit() {
         <span>Terug</span>
       </button>
 
-      <div v-if="scenario && firstStep" class="scenario-intro__content">
+      <div v-if="isLoading" class="scenario-intro__content">
+        <p>Laden…</p>
+      </div>
+
+      <div v-else-if="scenario && firstStep" class="scenario-intro__content">
         <h1 class="scenario-intro__title">
-          {{ scenario.intro.title }}
+          {{ intro?.title || scenario.title }}
         </h1>
 
         <p class="scenario-intro__description">
-          {{ scenario.intro.description }}
+          {{ intro?.description || scenario.description }}
         </p>
 
         <p class="scenario-intro__body">
-          {{ scenario.intro.body }}
+          {{ intro?.body }}
         </p>
+
+        <div class="scenario-intro__meta">
+          <p>{{ scenario.theme }} · {{ scenario.duration ? scenario.duration + ' min' : '' }}</p>
+        </div>
 
         <div class="scenario-intro__actions">
           <BaseButton
@@ -68,11 +84,11 @@ function goSafeExit() {
             size="lg"
             @click="startScenario"
           >
-            {{ scenario.intro.button }}
+            {{ intro?.button || 'Start' }}
           </BaseButton>
 
           <p class="scenario-intro__note">
-            {{ scenario.intro.note }}
+            {{ intro?.note }}
           </p>
         </div>
       </div>

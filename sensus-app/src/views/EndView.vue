@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg'
-import { getScenarioById } from '../services/scenarioService'
+import { getScenarioBySlug } from '../services/scenarioService'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -13,13 +13,15 @@ const router = useRouter()
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const stepId = computed(() => String(route.query.step ?? ''))
 
-const scenario = computed(() => getScenarioById(scenarioId.value))
+const scenario = ref(null)
+const isLoading = ref(true)
 const sessionId = localStorage.getItem('sessionId')
 
 const endStep = computed(() => {
 	if (!scenario.value || !stepId.value) return null
+	const steps = scenario.value.engine_json?.steps ?? []
 
-	return scenario.value.steps.find(
+	return steps.find(
 		(step) => step.id === stepId.value && step.type === 'end',
 	) ?? null
 })
@@ -40,6 +42,18 @@ async function endSession() {
 }
 
 onMounted(() => {
+	getScenarioBySlug(scenarioId.value)
+		.then((result) => {
+			scenario.value = result
+		})
+		.catch((error) => {
+			console.error(error)
+			scenario.value = null
+		})
+		.finally(() => {
+			isLoading.value = false
+		})
+
 	endSession()
 })
 
@@ -51,7 +65,11 @@ function finishScenario() {
 <template>
 	<ScreenContainer size="narrow">
 		<section class="end-view">
-			<div v-if="!endStep" class="end-view__empty">
+			<div v-if="isLoading" class="end-view__empty">
+				<h1 class="end-view__title">Laden…</h1>
+			</div>
+
+			<div v-else-if="!endStep" class="end-view__empty">
 				<h1 class="end-view__title">Einde niet gevonden</h1>
 			</div>
 

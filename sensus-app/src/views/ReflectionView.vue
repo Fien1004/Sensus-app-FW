@@ -1,26 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-import { getScenarioById } from '../services/scenarioService'
+import { getScenarioBySlug } from '../services/scenarioService'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
-const scenario = computed(() => getScenarioById(scenarioId.value))
+const scenario = ref(null)
+const isLoading = ref(true)
 
 const requestedStep = computed(() => route.query?.step)
 
 const reflectionStep = computed(() => {
   if (!scenario.value) return null
+  const steps = scenario.value.engine_json?.steps ?? []
   if (requestedStep.value) {
-    return scenario.value.steps.find((s) => s.id === requestedStep.value && s.type === 'reflection') || null
+    return steps.find((s) => s.id === requestedStep.value && s.type === 'reflection') || null
   }
 
-  return scenario.value.steps.find((s) => s.type === 'reflection') || null
+  return steps.find((s) => s.type === 'reflection') || null
 })
 
 const progress = computed(() => reflectionStep.value?.progress ?? 0)
@@ -28,6 +30,17 @@ const progress = computed(() => reflectionStep.value?.progress ?? 0)
 const answer = ref('')
 const sessionId = localStorage.getItem('sessionId')
 const currentStepId = computed(() => requestedStep.value ?? reflectionStep.value?.id ?? 'reflection')
+
+onMounted(async () => {
+  try {
+    scenario.value = await getScenarioBySlug(scenarioId.value)
+  } catch (error) {
+    console.error(error)
+    scenario.value = null
+  } finally {
+    isLoading.value = false
+  }
+})
 
 async function saveReflection() {
   if (!sessionId) return
@@ -61,7 +74,7 @@ async function handleNext() {
   const nextId = reflectionStep.value?.next
   if (!nextId) return
 
-  const nextStep = scenario.value?.steps.find((s) => s.id === nextId)
+  const nextStep = scenario.value?.engine_json?.steps?.find((s) => s.id === nextId)
   if (!nextStep) return
 
   if (nextStep.type === 'end') {
@@ -75,7 +88,11 @@ async function handleNext() {
 <template>
   <ScreenContainer size="narrow">
     <section class="reflection">
-      <div v-if="!scenario || !reflectionStep">
+      <div v-if="isLoading">
+        <h1>Laden…</h1>
+      </div>
+
+      <div v-else-if="!scenario || !reflectionStep">
         <h1>Reflectie niet gevonden</h1>
       </div>
 

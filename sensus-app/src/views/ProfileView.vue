@@ -7,8 +7,8 @@ import BaseSelect from '../components/base/BaseSelect.vue'
 
 const router = useRouter()
 
-const age = ref('15')
-const gender = ref('man')
+const age = ref(15)
+const gender = ref('')
 
 const ageOptions = [
   { value: '15', label: '15' },
@@ -34,8 +34,32 @@ function goBack() {
   router.push('/')
 }
 
+function updateAge(value) {
+  const parsedAge = Number(value)
+  age.value = Number.isFinite(parsedAge) ? parsedAge : 0
+}
+
+function updateGender(value) {
+  gender.value = typeof value === 'string' ? value : ''
+}
+
+function saveProfile() {
+  try {
+    localStorage.setItem(
+      'profile',
+      JSON.stringify({
+        age: age.value,
+        gender: gender.value,
+      })
+    )
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 function goNext() {
-  router.push('/waarschuwing')
+  saveProfile()
+  router.push({ name: 'warning' })
 }
 </script>
 
@@ -69,7 +93,8 @@ function goNext() {
 
           <BaseSelect
             id="age"
-            v-model="age"
+            :model-value="age"
+            @update:modelValue="updateAge"
             :options="ageOptions"
             placeholder="Kies je leeftijd"
           />
@@ -82,7 +107,8 @@ function goNext() {
 
           <BaseSelect
             id="gender"
-            v-model="gender"
+            :model-value="gender"
+            @update:modelValue="updateGender"
             :options="genderOptions"
             placeholder="Kies je gender"
           />

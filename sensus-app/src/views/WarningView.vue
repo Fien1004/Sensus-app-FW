@@ -9,13 +9,6 @@ const route = useRoute()
 const router = useRouter()
 
 function goNext() {
-  const currentScenarioRoute = localStorage.getItem('sensus_current_scenario_route')
-
-  if (currentScenarioRoute) {
-    router.push('/resume-scenario')
-    return
-  }
-
   router.push('/scenario-lijst')
 }
 

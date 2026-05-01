@@ -1,10 +1,11 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg'
 import { getScenarioById } from '../services/scenarioService'
+import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +14,7 @@ const scenarioId = computed(() => String(route.params.id ?? ''))
 const stepId = computed(() => String(route.query.step ?? ''))
 
 const scenario = computed(() => getScenarioById(scenarioId.value))
+const sessionId = localStorage.getItem('sessionId')
 
 const endStep = computed(() => {
 	if (!scenario.value || !stepId.value) return null
@@ -23,6 +25,23 @@ const endStep = computed(() => {
 })
 
 const progress = computed(() => 100)
+
+async function endSession() {
+	if (!sessionId) return
+
+	const { error } = await supabase
+		.from('sessions')
+		.update({ ended_at: new Date() })
+		.eq('id', sessionId)
+
+	if (error) {
+		console.error(error)
+	}
+}
+
+onMounted(() => {
+	endSession()
+})
 
 function finishScenario() {
 	router.replace({ name: 'scenario-list' })

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioById } from '../services/scenarioService'
+import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,12 +26,38 @@ const reflectionStep = computed(() => {
 const progress = computed(() => reflectionStep.value?.progress ?? 0)
 
 const answer = ref('')
+const sessionId = localStorage.getItem('sessionId')
+const currentStepId = computed(() => requestedStep.value ?? reflectionStep.value?.id ?? 'reflection')
+
+async function saveReflection() {
+  if (!sessionId) return
+
+  const reflectionAnswer = answer.value.trim()
+  if (!reflectionAnswer) return
+
+  const { error } = await supabase
+    .from('events')
+    .insert([
+      {
+        session_id: sessionId,
+        step_id: currentStepId.value || 'reflection',
+        type: 'reflection',
+        value: reflectionAnswer
+      }
+    ])
+
+  if (error) {
+    console.error(error)
+  }
+}
 
 function goSafeExit() {
   router.push({ name: 'safe-exit', query: { returnTo: route.fullPath } })
 }
 
-function handleNext() {
+async function handleNext() {
+  await saveReflection()
+
   const nextId = reflectionStep.value?.next
   if (!nextId) return
 

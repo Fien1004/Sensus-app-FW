@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, watchEffect } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PenIcon from '../assets/icons/pen.svg'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioById } from '../services/scenarioService'
+import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +28,55 @@ const currentStep = computed(() => {
 const progress = computed(() => currentStep.value?.progress ?? 0)
 
 const textAnswer = ref('')
+const sessionId = ref(null)
+
+async function startSession() {
+  const profile = JSON.parse(localStorage.getItem('profile') || '{}')
+
+  const { data, error } = await supabase
+    .from('sessions')
+    .insert([
+      {
+        scenario_id: scenarioId.value,
+        age: profile.age || null,
+        gender: profile.gender || 'unknown',
+        started_at: new Date()
+      }
+    ])
+    .select()
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  sessionId.value = data?.[0]?.id ?? null
+
+  if (sessionId.value) {
+    localStorage.setItem('sessionId', sessionId.value)
+  }
+}
+
+onMounted(() => {
+  startSession()
+})
+
+async function saveEvent(stepId, type, value) {
+  if (!sessionId.value) return
+
+  const { error } = await supabase
+    .from('events')
+    .insert([
+      {
+        session_id: sessionId.value,
+        step_id: stepId,
+        type,
+        value
+      }
+    ])
+
+  if (error) console.error(error)
+}
 
 watchEffect(() => {
   if (currentStep.value?.type === 'reflection') {
@@ -53,10 +103,14 @@ function navigateToStep(stepId) {
   }
 }
 
-function handleChoice(option) {
+async function handleChoice(option) {
   const next = option?.next
   if (!next) return
-  // If next indicates reflection or end by id, resolve by checking target step type
+
+  const choiceValue = option?.id ?? option?.label ?? option?.text
+  if (!choiceValue) return
+
+  await saveEvent(currentStepId.value, 'choice', choiceValue)
   navigateToStep(next)
 }
 

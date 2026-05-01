@@ -17,6 +17,7 @@ const firstStep = computed(() => scenario.value?.engine_json?.steps?.[0] ?? null
 onMounted(async () => {
   try {
     const s = await getScenarioBySlug(route.params.id)
+    console.debug('getScenarioBySlug intro', route.params.id, s)
     scenario.value = s
   } catch (err) {
     console.error(err)

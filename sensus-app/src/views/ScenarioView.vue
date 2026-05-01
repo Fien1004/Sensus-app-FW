@@ -62,6 +62,7 @@ async function startSession() {
 onMounted(async () => {
   try {
     const s = await getScenarioBySlug(slug)
+    console.debug('getScenarioBySlug', slug, s)
     // Use engine_json as the scenario data for steps/intro
     scenario.value = s?.engine_json ?? null
   } catch (err) {

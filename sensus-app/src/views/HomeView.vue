@@ -1,32 +1,100 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabase'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import Logo from '../assets/logo/wordmark-dark.png'
 
 const router = useRouter()
 
-const ACCESS_CODE = '6AQ59'
 const CODE_LENGTH = 5
 
 const code = ref(Array.from({ length: CODE_LENGTH }, () => ''))
 const errorMessage = ref('')
 const hasAttemptedSubmit = ref(false)
+const isValidating = ref(false)
 const codeInputRefs = ref([])
 
 const enteredCode = computed(() =>
-  code.value.map((item) => item.trim()).join(''),
+  code.value.map((item) => item.trim().toUpperCase()).join(''),
 )
 
 const isCodeComplete = computed(() =>
   code.value.every((item) => item.length === 1),
 )
 
-const isStartDisabled = computed(() => !isCodeComplete.value)
+const isStartDisabled = computed(() => !isCodeComplete.value || isValidating.value)
 
-function validateAccessCode(inputCode) {
-  return inputCode.trim().toUpperCase() === ACCESS_CODE
+async function validateAccessCode(inputCode) {
+  const accessCode = inputCode.trim().toUpperCase()
+
+  console.log('URL:', import.meta.env.VITE_SUPABASE_URL)
+  console.log('[AccessCode] Samengestelde code:', accessCode)
+
+  if (!accessCode) {
+    console.warn('[AccessCode] Code is leeg na trim/toUpperCase')
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  const { data: allData } = await supabase
+    .from('access_codes')
+    .select('*')
+
+  console.log('Alle codes in DB:', allData)
+
+  const { data, error } = await supabase
+    .from('access_codes')
+    .select('*')
+    .eq('code', accessCode)
+    .maybeSingle()
+
+  console.log('[AccessCode] data:', data)
+  console.log('[AccessCode] error:', error)
+
+  if (error) {
+    console.error('[AccessCode] Supabase error:', error)
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  if (!data) {
+    console.warn('[AccessCode] Geen data gevonden voor code:', accessCode)
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  const hasExpired = data.expires_at ? new Date(data.expires_at) <= new Date() : false
+  const hasReachedUsageLimit =
+    data.max_uses != null && Number(data.used_count ?? 0) >= Number(data.max_uses)
+
+  if (!data.is_active) {
+    console.warn('[AccessCode] is_active is false')
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  if (hasExpired) {
+    console.warn('[AccessCode] expires_at is verlopen:', data.expires_at)
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  if (hasReachedUsageLimit) {
+    console.warn('[AccessCode] max_uses bereikt', {
+      used_count: data.used_count,
+      max_uses: data.max_uses,
+    })
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  const { error: updateError } = await supabase
+    .from('access_codes')
+    .update({ used_count: Number(data.used_count ?? 0) + 1 })
+    .eq('id', data.id)
+
+  if (updateError) {
+    console.error('[AccessCode] Update error:', updateError)
+    return { isValid: false, message: 'De code is ongeldig of niet meer actief.' }
+  }
+
+  return { isValid: true, message: '' }
 }
 
 function focusCodeInput(index) {
@@ -100,16 +168,25 @@ function handleCodePaste(index, event) {
   })
 }
 
-function goNext() {
+async function goNext() {
   hasAttemptedSubmit.value = true
-
-  if (!validateAccessCode(enteredCode.value)) {
-    errorMessage.value = 'De code is onjuist. Probeer opnieuw.'
-    return
-  }
-
   errorMessage.value = ''
-  router.push('/profiel')
+  isValidating.value = true
+
+  try {
+    const result = await validateAccessCode(enteredCode.value)
+
+    if (!result.isValid) {
+      errorMessage.value = result.message
+      return
+    }
+
+    router.push('/profiel')
+  } catch {
+    errorMessage.value = 'Er ging iets mis bij het controleren van de code. Probeer opnieuw.'
+  } finally {
+    isValidating.value = false
+  }
 }
 </script>
 
@@ -165,9 +242,6 @@ function goNext() {
             {{ errorMessage }}
           </p>
 
-          <p class="home__code-demo">
-            Demo-code: 6AQ59
-          </p>
         </section>
       </main>
 
@@ -248,13 +322,6 @@ function goNext() {
   font-size: 0.875rem;
   line-height: 1.3;
   color: #b00020;
-}
-
-.home__code-demo {
-  margin-top: 8px;
-  font-size: 0.875rem;
-  line-height: 1.3;
-  color: var(--color-text);
 }
 
 .home__code-box {

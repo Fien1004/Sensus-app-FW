@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
@@ -8,17 +8,19 @@ import Logo from '../assets/logo/wordmark-dark.png'
 const router = useRouter()
 
 const ACCESS_CODE = '6AQ59'
+const CODE_LENGTH = 5
 
-const code = ref(['', '', '', '', ''])
+const code = ref(Array.from({ length: CODE_LENGTH }, () => ''))
 const errorMessage = ref('')
 const hasAttemptedSubmit = ref(false)
+const codeInputRefs = ref([])
 
 const enteredCode = computed(() =>
   code.value.map((item) => item.trim()).join(''),
 )
 
 const isCodeComplete = computed(() =>
-  enteredCode.value.length === ACCESS_CODE.length,
+  code.value.every((item) => item.length === 1),
 )
 
 const isStartDisabled = computed(() => !isCodeComplete.value)
@@ -27,15 +29,75 @@ function validateAccessCode(inputCode) {
   return inputCode.trim().toUpperCase() === ACCESS_CODE
 }
 
-function handleCodeInput(index, event) {
-  const rawValue = event.target.value ?? ''
-  const normalizedValue = rawValue.replace(/\s+/g, '').slice(0, 1).toUpperCase()
+function focusCodeInput(index) {
+  codeInputRefs.value[index]?.focus()
+}
 
-  code.value[index] = normalizedValue
+function setCodeValue(index, value) {
+  code.value[index] = value
 
   if (hasAttemptedSubmit.value) {
     errorMessage.value = ''
   }
+}
+
+function handleCodeInput(index, event) {
+  const rawValue = event.target.value ?? ''
+  const normalizedValue = rawValue.replace(/\s+/g, '').toUpperCase()
+
+  if (normalizedValue.length > 1) {
+    // Verdeel een geplakte code automatisch over de velden.
+    const pastedValues = normalizedValue.slice(0, CODE_LENGTH - index).split('')
+
+    pastedValues.forEach((character, pastedIndex) => {
+      setCodeValue(index + pastedIndex, character)
+    })
+
+    nextTick(() => {
+      focusCodeInput(Math.min(index + pastedValues.length, CODE_LENGTH - 1))
+    })
+
+    return
+  }
+
+  setCodeValue(index, normalizedValue.slice(0, 1))
+
+  if (normalizedValue && index < CODE_LENGTH - 1) {
+    // Verplaats focus direct naar het volgende veld na één teken.
+    nextTick(() => focusCodeInput(index + 1))
+  }
+}
+
+function handleCodeKeydown(index, event) {
+  if (event.key !== 'Backspace' || code.value[index]) {
+    return
+  }
+
+  // Ga terug naar het vorige veld als dit veld al leeg is.
+  if (index > 0) {
+    event.preventDefault()
+    code.value[index - 1] = ''
+    focusCodeInput(index - 1)
+  }
+}
+
+function handleCodePaste(index, event) {
+  event.preventDefault()
+
+  const pastedValue = event.clipboardData?.getData('text') ?? ''
+  const normalizedValue = pastedValue.replace(/\s+/g, '').toUpperCase()
+
+  if (!normalizedValue) {
+    return
+  }
+
+  normalizedValue.slice(0, CODE_LENGTH - index).split('').forEach((character, pastedIndex) => {
+    setCodeValue(index + pastedIndex, character)
+  })
+
+  nextTick(() => {
+    focusCodeInput(Math.min(index + normalizedValue.length, CODE_LENGTH - 1))
+  })
 }
 
 function goNext() {
@@ -82,7 +144,13 @@ function goNext() {
               v-for="(_, index) in code"
               :key="index"
               :value="code[index]"
+              :ref="(element) => { codeInputRefs[index] = element }"
+              :aria-label="`Code teken ${index + 1}`"
+              autocomplete="one-time-code"
+              inputmode="text"
               @input="handleCodeInput(index, $event)"
+              @keydown="handleCodeKeydown(index, $event)"
+              @paste="handleCodePaste(index, $event)"
               type="text"
               maxlength="1"
               class="home__code-box"

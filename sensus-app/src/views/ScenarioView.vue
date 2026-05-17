@@ -6,9 +6,12 @@ import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioBySlug } from '../services/scenarioService'
 import { supabase } from '../lib/supabase'
+import { useScenarioAI } from '../composables/useScenarioAI'
+import { intentToNode } from '../utils/intentToNode'
 
 const route = useRoute()
 const router = useRouter()
+const { analyzeResponse } = useScenarioAI()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const slug = route.params.id
@@ -62,11 +65,14 @@ async function startSession() {
 onMounted(async () => {
   try {
     const s = await getScenarioBySlug(slug)
-    console.debug('getScenarioBySlug', slug, s)
+    console.debug('getScenarioBySlug result:', s)
+    console.debug('engine_json:', s?.engine_json)
+    console.debug('engine_json.steps count:', s?.engine_json?.steps?.length)
     // Use engine_json as the scenario data for steps/intro
     scenario.value = s?.engine_json ?? null
+    console.debug('scenario.value set to:', scenario.value)
   } catch (err) {
-    console.error(err)
+    console.error('Error in onMounted:', err)
     scenario.value = null
   } finally {
     isLoading.value = false
@@ -102,18 +108,48 @@ function goSafeExit() {
   router.push({ name: 'safe-exit', query: { returnTo: route.fullPath } })
 }
 
+function goBack() {
+  // If we're in an input step, go back to the choice step (remove '-input' suffix)
+  const baseStepId = currentStepId.value?.replace('-input', '')
+  router.push({ query: { step: baseStepId } })
+}
+
 function navigateToStep(stepId) {
-  if (!stepId) return
+  console.log('=== navigateToStep CALLED with stepId:', stepId)
   
-  const nextStep = scenario.value?.steps.find((s) => s.id === stepId)
-  if (!nextStep) return
+  if (!stepId) {
+    console.warn('navigateToStep: no stepId provided, using step-1')
+    stepId = 'step-1'
+  }
+  
+  let nextStep = scenario.value?.steps.find((s) => s.id === stepId)
+  console.log('Found step:', nextStep?.id, 'type:', nextStep?.type)
+  
+  // Fallback to step-3 if step not found (first branching point)
+  if (!nextStep) {
+    console.warn('navigateToStep: step not found:', stepId, 'falling back to step-3')
+    nextStep = scenario.value?.steps.find((s) => s.id === 'step-3')
+  }
+  
+  // Last resort: use first step
+  if (!nextStep) {
+    console.warn('navigateToStep: no valid step found, using first step')
+    nextStep = scenario.value?.steps?.[0]
+  }
+  
+  if (!nextStep) {
+    console.error('navigateToStep: could not find any step')
+    return
+  }
+  
+  console.log('Pushing to router:', nextStep.id)
   
   if (nextStep.type === 'reflection') {
-    router.push({ name: 'reflection', params: { id: scenarioId.value }, query: { step: stepId } })
+    router.push({ name: 'reflection', params: { id: scenarioId.value }, query: { step: nextStep.id } })
   } else if (nextStep.type === 'end') {
-    router.push({ name: 'end', params: { id: scenarioId.value }, query: { step: stepId } })
+    router.push({ name: 'end', params: { id: scenarioId.value }, query: { step: nextStep.id } })
   } else {
-    router.push({ name: 'scenario', params: { id: scenarioId.value }, query: { step: stepId } })
+    router.push({ name: 'scenario', params: { id: scenarioId.value }, query: { step: nextStep.id } })
   }
 }
 
@@ -145,12 +181,74 @@ function handleContinue() {
   })
 }
 
-function handleTextNext() {
-  const next = currentStep.value?.next
-  if (!next) return
-  // We do not store personal data; just navigate forward
-  textAnswer.value = ''
-  navigateToStep(next)
+async function handleTextNext() {
+  const userInput = textAnswer.value.trim()
+  
+  if (!userInput) {
+    console.warn('No text input provided')
+    return
+  }
+
+  console.log('=== handleTextNext CALLED ===')
+  console.log('User input:', userInput)
+  console.log('Current step ID:', currentStepId.value)
+  
+  try {
+    console.log('Calling analyzeResponse...')
+    
+    // Create a timeout promise
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        console.warn('analyzeResponse timeout - using currentStep.next')
+        resolve({
+          sentiment: 'TIMEOUT',
+          confidence: 0,
+          intent: 'onduidelijk',
+          nextNode: currentStep.value?.next || intentToNode['onduidelijk']
+        })
+      }, 3000) // 3 second timeout
+    })
+    
+    // Race between analyzeResponse and timeout
+    const result = await Promise.race([
+      analyzeResponse(userInput),
+      timeoutPromise
+    ])
+    
+    console.log('AI Analysis Result:', result)
+    // Keep logging for debugging, but do NOT let AI override scenario flow
+    console.log('AI intent:', result?.intent, 'sentiment:', result?.sentiment, 'confidence:', result?.confidence)
+
+    // If AI explicitly requests fallback, show fallback (branching step)
+    if (result?.nextNode === 'node_fallback') {
+      console.log('AI requested fallback, navigating to step-3')
+      textAnswer.value = ''
+      navigateToStep('step-3')
+      return
+    }
+
+    // In all other cases, follow the scenario's defined next step
+    const next = currentStep.value?.next
+    if (!next) {
+      console.warn('No currentStep.next defined, cannot navigate')
+      return
+    }
+
+    textAnswer.value = ''
+    navigateToStep(next)
+  } catch (error) {
+    console.error('Error analyzing response:', error)
+    // Fallback to default next step on error
+    const next = currentStep.value?.next
+    console.log('Fallback: currentStep.next =', next)
+    if (!next) {
+      console.warn('No next step available, cannot navigate')
+      return
+    }
+    textAnswer.value = ''
+    console.log('Navigating to fallback step:', next)
+    navigateToStep(next)
+  }
 }
 </script>
 

@@ -1,4 +1,9 @@
-const DOUBT_KEYWORDS = ['weet niet', 'geen idee', 'twijfel', 'misschien', 'ik weet het niet', 'ik twijfel', 'zeker niet weten'];
+const DOUBT_KEYWORDS = [
+    'weet het zo niet',
+    'weet het zo niet goed',
+    'niet goed',
+    'ik weet het zo niet',
+    'ik weet het zo niet goed'];
 const DENIAL_KEYWORDS = ['valt wel mee', 'geen probleem', 'iedereen doet dit', 'zo erg is het niet', 'valt eigenlijk wel mee', 'is geen issue'];
 const MOTIVATION_KEYWORDS = ['wil veranderen', 'beter doen', 'volgende keer', 'ik wil stoppen', 'ik ga het proberen', 'ik wil eraan werken'];
 const EMOTIONAL_KEYWORDS = ['verdrietig', 'boos', 'gestrest', 'gespannen', 'overweldigd', 'teleurgesteld', 'machteloos', 'bang', 'angstig', 'frustratie'];

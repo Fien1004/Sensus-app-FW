@@ -1,7 +1,7 @@
 export const intentToNode = {
-  ontkenning: 'node_1',
-  twijfel: 'node_2',
-  motivatie: 'node_3',
-  emotioneel: 'node_4',
+  twijfel: 'step-1-input',
+  ontkenning: 'step-2-input',
+  motivatie: 'step-5a-input',
+  emotioneel: 'step-5b-input',
   onduidelijk: 'node_fallback',
 };

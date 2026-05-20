@@ -55,7 +55,7 @@ async function saveReflection() {
         session_id: sessionId,
         step_id: currentStepId.value || 'reflection',
         type: 'reflection',
-        value: reflectionAnswer
+        value: 'submitted'
       }
     ])
 

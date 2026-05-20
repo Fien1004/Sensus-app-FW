@@ -31,6 +31,30 @@ const currentStep = computed(() => {
 })
 
 const progress = computed(() => currentStep.value?.progress ?? 0)
+const isFallbackStep = computed(() => currentStepId.value === 'node_fallback')
+
+const fallbackChoices = [
+  {
+    label: 'Nog eens proberen',
+    description: 'Terug naar het keuze-moment.',
+    next: 'step-3',
+  },
+  {
+    label: 'Verder praten',
+    description: 'Kies de richting waarin je het gesprek wil sturen.',
+    next: 'step-4a',
+  },
+  {
+    label: 'Even afstand nemen',
+    description: 'Laat wat ruimte vallen en kijk wat dat doet.',
+    next: 'step-4b',
+  },
+  {
+    label: 'Stoppen',
+    description: 'Verlaat het scenario en kies voor een veilige pauze.',
+    action: 'safe-exit',
+  },
+]
 
 const textAnswer = ref('')
 const sessionId = ref(null)
@@ -116,6 +140,15 @@ function goBack() {
 
 function navigateToStep(stepId) {
   console.log('=== navigateToStep CALLED with stepId:', stepId)
+
+  if (stepId === 'node_fallback') {
+    router.push({
+      name: 'scenario',
+      params: { id: scenarioId.value },
+      query: { step: 'node_fallback' },
+    })
+    return
+  }
   
   if (!stepId) {
     console.warn('navigateToStep: no stepId provided, using step-1')
@@ -221,9 +254,9 @@ async function handleTextNext() {
 
     // If AI explicitly requests fallback, show fallback (branching step)
     if (result?.nextNode === 'node_fallback') {
-      console.log('AI requested fallback, navigating to step-3')
+      console.log('AI requested fallback, navigating to node_fallback')
       textAnswer.value = ''
-      navigateToStep('step-3')
+      navigateToStep('node_fallback')
       return
     }
 
@@ -250,6 +283,19 @@ async function handleTextNext() {
     navigateToStep(next)
   }
 }
+
+async function handleFallbackChoice(choice) {
+  if (!choice) return
+
+  await saveEvent(currentStepId.value, 'choice', choice.label)
+
+  if (choice.action === 'safe-exit') {
+    goSafeExit()
+    return
+  }
+
+  navigateToStep(choice.next)
+}
 </script>
 
 <template>
@@ -261,6 +307,29 @@ async function handleTextNext() {
 
       <div v-else-if="!scenario">
         <h1>Scenario niet gevonden</h1>
+      </div>
+
+      <div v-else-if="isFallbackStep" class="scenario-step__inner">
+        <div class="scenario-step__progress-wrap">
+          <div class="scenario-step__progress" :style="{ width: '45%' }"></div>
+        </div>
+
+        <h1 class="scenario-step__title">Antwoord niet helemaal duidelijk</h1>
+        <p class="scenario-step__description">
+          Het antwoord was niet helemaal duidelijk. Kies zelf een richting om verder te gaan.
+        </p>
+
+        <div class="scenario-step__fallback-grid">
+          <button
+            v-for="choice in fallbackChoices"
+            :key="choice.label"
+            class="fallback-choice"
+            @click="handleFallbackChoice(choice)"
+          >
+            <span class="fallback-choice__label">{{ choice.label }}</span>
+            <span class="fallback-choice__description">{{ choice.description }}</span>
+          </button>
+        </div>
       </div>
 
       <div v-else-if="!currentStep">
@@ -372,6 +441,37 @@ async function handleTextNext() {
 .scenario-step__description {
   margin-top: 10px;
   color: var(--color-text);
+}
+
+.scenario-step__fallback-grid {
+  margin-top: 24px;
+  display: grid;
+  gap: 14px;
+}
+
+.fallback-choice {
+  appearance: none;
+  border: 1px solid var(--color-neutral-200, #e5e7eb);
+  border-radius: 20px;
+  background: #fff;
+  padding: 18px 16px;
+  text-align: left;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.fallback-choice__label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.fallback-choice__description {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--color-neutral-700, #4b5563);
 }
 
 .scenario-step__chat {

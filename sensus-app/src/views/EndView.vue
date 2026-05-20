@@ -6,6 +6,7 @@ import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg'
 import { getScenarioBySlug } from '../services/scenarioService'
 import { supabase } from '../lib/supabase'
+import { saveAnonymousScenarioAnalytics } from '../services/scenarioAnalytics'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +17,7 @@ const stepId = computed(() => String(route.query.step ?? ''))
 const scenario = ref(null)
 const isLoading = ref(true)
 const sessionId = localStorage.getItem('sessionId')
+const analyticsSaved = ref(false)
 
 const endStep = computed(() => {
 	if (!scenario.value || !stepId.value) return null
@@ -42,19 +44,31 @@ async function endSession() {
 }
 
 onMounted(() => {
-	getScenarioBySlug(scenarioId.value)
-		.then((result) => {
-			scenario.value = result
-		})
-		.catch((error) => {
+	(async () => {
+		try {
+			scenario.value = await getScenarioBySlug(scenarioId.value)
+		} catch (error) {
 			console.error(error)
 			scenario.value = null
-		})
-		.finally(() => {
+		} finally {
 			isLoading.value = false
+		}
+
+		await endSession()
+
+		if (analyticsSaved.value || !endStep.value) {
+			return
+		}
+
+		const outcomePath = endStep.value.path ?? endStep.value.id ?? 'unknown'
+		const result = await saveAnonymousScenarioAnalytics({
+			scenarioId: scenarioId.value,
+			outcomePath,
+			completionStatus: 'completed',
 		})
 
-	endSession()
+		analyticsSaved.value = result.ok
+	})()
 })
 
 function finishScenario() {

@@ -10,7 +10,6 @@ import EndView from '../views/EndView.vue'
 import SafeExitView from '../views/SafeExitView.vue'
 import StopConfirmView from '../views/StopConfirmView.vue'
 import ResumeScenarioView from '../views/ResumeScenarioView.vue'
-import AITestView from '../views/AITestView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -71,11 +70,6 @@ const router = createRouter({
       path: '/resume-scenario',
       name: 'resume-scenario',
       component: ResumeScenarioView,
-    },
-    {
-      path: '/ai-test',
-      name: 'ai-test',
-      component: AITestView,
     },
   ],
 })

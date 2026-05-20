@@ -32,6 +32,15 @@ const currentStep = computed(() => {
 
 const progress = computed(() => currentStep.value?.progress ?? 0)
 const isFallbackStep = computed(() => currentStepId.value === 'node_fallback')
+const scenarioLayout = computed(() => {
+  const stepLayout = String(currentStep.value?.layout ?? '').toLowerCase()
+  if (stepLayout === 'narrative' || stepLayout === 'chat') {
+    return stepLayout
+  }
+
+  const theme = String(scenario.value?.theme ?? '').toLowerCase()
+  return theme === 'sociale situatie' ? 'narrative' : 'chat'
+})
 
 const fallbackChoices = [
   {
@@ -344,7 +353,30 @@ async function handleFallbackChoice(choice) {
         <h1 class="scenario-step__title">{{ currentStep.title }}</h1>
         <p class="scenario-step__description">{{ currentStep.description }}</p>
 
-        <div v-if="currentStep.chatMessages" class="scenario-step__chat">
+        <div
+          v-if="scenarioLayout === 'narrative' && (currentStep.contentCard || currentStep.chatMessages?.length)"
+          class="narrative-content-card"
+        >
+          <p v-if="currentStep.contentCard?.text" class="narrative-content-card__text">
+            {{ currentStep.contentCard.text }}
+          </p>
+          <p v-if="currentStep.contentCard?.note" class="narrative-content-card__note">
+            {{ currentStep.contentCard.note }}
+          </p>
+
+          <div v-if="currentStep.chatMessages?.length" class="narrative-content-card__messages">
+            <div
+              v-for="(msg, idx) in currentStep.chatMessages"
+              :key="idx"
+              class="narrative-content-card__message"
+            >
+              <p class="narrative-content-card__text">{{ msg.text }}</p>
+              <p v-if="msg.note" class="narrative-content-card__note">{{ msg.note }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="scenarioLayout !== 'narrative' && currentStep.chatMessages" class="scenario-step__chat">
           <div class="scenario-step__chat-card">
             <div
               v-for="(msg, idx) in currentStep.chatMessages"
@@ -441,6 +473,40 @@ async function handleFallbackChoice(choice) {
 .scenario-step__description {
   margin-top: 10px;
   color: var(--color-text);
+}
+
+.narrative-content-card {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(17,24,39,0.08);
+  padding: 24px;
+}
+
+.narrative-content-card__text {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.narrative-content-card__note {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.narrative-content-card__messages {
+  margin-top: 8px;
+  display: grid;
+  gap: 12px;
+}
+
+.narrative-content-card__message .narrative-content-card__text {
+  margin: 0;
 }
 
 .scenario-step__fallback-grid {

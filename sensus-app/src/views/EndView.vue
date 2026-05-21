@@ -128,7 +128,7 @@ function finishScenario() {
 
 <style scoped>
 .end-view {
-	min-height: calc(100vh - 32px);
+	min-height: calc(100dvh - 64px);
 	display: flex;
 	flex-direction: column;
 	padding-top: 24px;

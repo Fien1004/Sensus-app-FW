@@ -51,9 +51,11 @@ async function handleTestAI() {
 
 <style scoped>
 .ai-test-view {
+  width: 100%;
+  min-height: calc(100dvh - 64px);
   display: grid;
   gap: 12px;
-  padding: 16px;
+  padding: 32px 24px;
 }
 
 textarea {
@@ -74,7 +76,8 @@ button {
   .ai-test-view {
     max-width: 760px;
     margin: 0 auto;
-    padding: 32px 16px;
+    padding-left: 200px;
+    padding-right: 200px;
   }
 
   h1 {
@@ -87,6 +90,13 @@ button {
 
   button {
     min-width: 160px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ai-test-view {
+    padding-left: 300px;
+    padding-right: 300px;
   }
 }
 </style>

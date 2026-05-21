@@ -254,6 +254,11 @@ async function goNext() {
         >
           Start
         </BaseButton>
+
+        <p class="home__text" style="margin-top: 24px;">
+          Demo code: 2IB25
+        </p>
+
       </footer>
     </section>
   </ScreenContainer>
@@ -261,7 +266,7 @@ async function goNext() {
 
 <style scoped>
 .home {
-  min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 64px);
   display: flex;
   flex-direction: column;
   padding-top: 56px;

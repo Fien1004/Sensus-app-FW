@@ -39,7 +39,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ScreenContainer size="wide">
+  <ScreenContainer size="wide" gutter="scenario-list">
     <section class="scenario-list">
       <button
         type="button"
@@ -85,10 +85,6 @@ onMounted(async () => {
             <p class="scenario-card__theme">
               {{ scenario.theme }}
             </p>
-
-            <p v-if="scenario.duration" class="scenario-card__duration">
-              Duur: {{ scenario.duration }}
-            </p>
           </div>
 
           <BaseButton
@@ -106,7 +102,9 @@ onMounted(async () => {
 
 <style scoped>
 .scenario-list {
-  min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 64px);
+  width: 100%;
+  min-width: 0;
   padding-top: 24px;
   padding-bottom: 24px;
 }
@@ -136,15 +134,15 @@ onMounted(async () => {
 
 .scenario-list__title {
   margin: 0;
-  font-size: 2rem;
-  line-height: 1.1;
+  font-size: 28px;
+  line-height: 120%;
   font-weight: 700;
   color: var(--color-text);
 }
 
 .scenario-list__subtitle {
   margin-top: 6px;
-  font-size: 1.05rem;
+  font-size: 16px;
   line-height: 1.3;
   color: var(--color-text);
 }
@@ -164,7 +162,7 @@ onMounted(async () => {
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
 }
 
 .scenario-card__content {
@@ -177,24 +175,26 @@ onMounted(async () => {
 
 .scenario-card__title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 20px;
+  font-family: var(--font-family-base);
   line-height: 1.25;
   font-weight: 700;
   color: var(--color-text);
 }
 
 .scenario-card__description {
-  margin-top: 8px;
+  margin-top: 14px;
   font-size: 1rem;
   line-height: 1.35;
   color: var(--color-text);
 }
 
 .scenario-card__theme {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 0.95rem;
+  font-family: var(--font-family-base);
   line-height: 1.3;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-600);
 }
 
 .scenario-card__duration {
@@ -212,8 +212,6 @@ onMounted(async () => {
 
 @media (min-width: 768px) {
   .scenario-list {
-    max-width: 1040px;
-    margin: 0 auto;
     padding-top: 40px;
     padding-bottom: 40px;
   }
@@ -244,10 +242,6 @@ onMounted(async () => {
 }
 
 @media (min-width: 1024px) {
-  .scenario-list {
-    max-width: 1040px;
-  }
-
   .scenario-card {
     padding: 24px 20px 20px;
   }

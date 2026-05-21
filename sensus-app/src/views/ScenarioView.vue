@@ -443,7 +443,7 @@ async function handleFallbackChoice(choice) {
 
 <style scoped>
 .scenario-step {
-  min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 64px);
   display: flex;
   flex-direction: column;
   padding-top: 20px;

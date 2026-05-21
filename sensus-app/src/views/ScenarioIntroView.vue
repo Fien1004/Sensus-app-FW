@@ -69,15 +69,9 @@ function goSafeExit() {
 
         <p class="scenario-intro__description">
           {{ intro?.description || scenario.description }}
-        </p>
-
-        <p class="scenario-intro__body">
+          <br>
           {{ intro?.body }}
         </p>
-
-        <div class="scenario-intro__meta">
-          <p>{{ scenario.theme }} · {{ scenario.duration ? scenario.duration + ' min' : '' }}</p>
-        </div>
 
         <div class="scenario-intro__actions">
           <BaseButton
@@ -116,7 +110,7 @@ function goSafeExit() {
 
 <style scoped>
 .scenario-intro {
-  min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 64px);
   display: flex;
   flex-direction: column;
   padding-top: 24px;
@@ -153,7 +147,8 @@ function goSafeExit() {
 
 .scenario-intro__title {
   margin: 0;
-  font-size: 2rem;
+  padding-bottom: 1rem;
+  font-size: 28px;
   line-height: 1.1;
   font-weight: 700;
   color: var(--color-text);
@@ -161,14 +156,14 @@ function goSafeExit() {
 
 .scenario-intro__description {
   margin-top: 10px;
-  font-size: 1.125rem;
+  font-size: 16px;
   line-height: 1.3;
   color: var(--color-text);
 }
 
 .scenario-intro__body {
   margin-top: 14px;
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.35;
   color: var(--color-text);
 }
@@ -179,9 +174,9 @@ function goSafeExit() {
 
 .scenario-intro__note {
   margin-top: 18px;
-  font-size: 0.875rem;
+  font-size: 12px;
   line-height: 1.3;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-600);
 }
 
 .scenario-intro__content--empty {

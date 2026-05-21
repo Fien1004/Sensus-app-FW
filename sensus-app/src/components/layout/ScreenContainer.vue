@@ -24,7 +24,7 @@ const classes = computed(() => [
 
 <style scoped>
 .screen-container {
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   padding: 16px;
   background: var(--color-bg);

@@ -64,7 +64,7 @@ function goNext() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="profile">
       <header class="profile__header">
       <button class="profile__back" type="button" @click="goBack">
@@ -219,5 +219,29 @@ function goNext() {
   margin-top: auto;
   padding-top: 32px;
   padding-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+  .profile {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .profile__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .profile__intro,
+  .profile__label,
+  .profile__privacy {
+    font-size: 1.05rem;
+  }
+
+  .profile__header {
+    margin-bottom: 40px;
+  }
 }
 </style>

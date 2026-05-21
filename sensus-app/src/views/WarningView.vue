@@ -18,7 +18,7 @@ function goStop() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="warning">
 
       <div class="warning__icon-wrap">
@@ -118,5 +118,33 @@ function goStop() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .warning {
+    max-width: 760px;
+    margin: 0 auto;
+    justify-content: center;
+    padding-top: 0;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .warning__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .warning__text {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+
+  .warning__question {
+    font-size: 1.125rem;
+  }
+
+  .warning__icon {
+    width: 140px;
+    height: 140px;
+  }
 }
 </style>

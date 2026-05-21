@@ -86,7 +86,7 @@ async function handleNext() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="reflection">
       <div v-if="isLoading">
         <h1>Laden…</h1>
@@ -130,6 +130,11 @@ async function handleNext() {
   flex-direction: column;
   padding-top: 24px;
   padding-bottom: 24px;
+}
+
+.reflection__content,
+.reflection__footer {
+  width: 100%;
 }
 
 .reflection__progress-wrap {
@@ -190,5 +195,36 @@ async function handleNext() {
 .reflection__footer {
   margin-top: auto;
   padding-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .reflection {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .reflection__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .reflection__description,
+  .reflection__question {
+    font-size: 1.05rem;
+  }
+
+  .reflection__card {
+    padding: 16px;
+  }
+
+  .reflection__textarea {
+    min-height: 180px;
+  }
+
+  .reflection__footer {
+    margin-top: auto;
+  }
 }
 </style>

@@ -25,7 +25,7 @@ function restartScenario() {
 </script>
 
 <template>
-	<ScreenContainer size="narrow">
+	<ScreenContainer size="medium">
 		<section class="resume-scenario">
 			<h1 class="resume-scenario__title">
 				Je was bezig met een scenario
@@ -66,5 +66,24 @@ function restartScenario() {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+@media (min-width: 768px) {
+	.resume-scenario {
+		max-width: 760px;
+		margin: 0 auto;
+		justify-content: center;
+		padding-top: 0;
+		padding-bottom: 0;
+		min-height: calc(100dvh - 32px);
+	}
+
+	.resume-scenario__title {
+		font-size: clamp(2rem, 3vw, 2.5rem);
+	}
+
+	.resume-scenario__actions {
+		margin-top: 32px;
+	}
 }
 </style>

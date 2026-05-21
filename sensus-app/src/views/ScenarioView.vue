@@ -308,7 +308,7 @@ async function handleFallbackChoice(choice) {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="scenario-step">
       <div v-if="isLoading">
         <h1>Laden…</h1>
@@ -448,6 +448,11 @@ async function handleFallbackChoice(choice) {
   flex-direction: column;
   padding-top: 20px;
   padding-bottom: 24px;
+}
+
+.scenario-step__inner,
+.scenario-step__footer {
+  width: 100%;
 }
 
 .scenario-step__progress-wrap {
@@ -707,5 +712,53 @@ async function handleFallbackChoice(choice) {
 .scenario-step__footer {
   margin-top: auto;
   padding-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .scenario-step {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .scenario-step__title {
+    font-size: clamp(1.9rem, 2.8vw, 2.5rem);
+  }
+
+  .scenario-step__description {
+    font-size: 1.05rem;
+  }
+
+  .scenario-step__fallback-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .scenario-step__chat {
+    margin-top: 24px;
+  }
+
+  .scenario-step__chat-card {
+    padding: 20px;
+  }
+
+  .scenario-step__question {
+    margin-top: 28px;
+    margin-bottom: 28px;
+  }
+
+  .scenario-step__question-label {
+    font-size: 1.05rem;
+  }
+
+  .scenario-step__text-actions {
+    justify-content: flex-start;
+  }
+
+  .scenario-step__text-actions .text-action {
+    max-width: 280px;
+  }
 }
 </style>

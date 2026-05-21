@@ -191,7 +191,7 @@ async function goNext() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="wide">
     <section class="home">
       <header class="home__header">
         <img
@@ -353,5 +353,75 @@ async function goNext() {
   margin-top: auto;
   padding-top: 32px;
   padding-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+  .home {
+    max-width: 760px;
+    margin: 0 auto;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .home__header,
+  .home__content,
+  .home__footer {
+    width: 100%;
+  }
+
+  .home__header {
+    margin-bottom: 40px;
+  }
+
+  .home__logo {
+    width: 240px;
+  }
+
+  .home__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .home__text,
+  .home__code-label,
+  .home__code-error {
+    font-size: 1.05rem;
+  }
+
+  .home__content {
+    gap: 12px;
+  }
+
+  .home__code-section {
+    margin-top: 24px;
+  }
+
+  .home__code-inputs {
+    gap: 16px;
+  }
+
+  .home__code-box {
+    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+    height: 56px;
+  }
+
+  .home__footer {
+    margin-top: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home {
+    max-width: 760px;
+  }
+
+  .home__logo {
+    width: 260px;
+  }
 }
 </style>

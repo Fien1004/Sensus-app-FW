@@ -39,7 +39,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="wide">
     <section class="scenario-list">
       <button
         type="button"
@@ -158,6 +158,8 @@ onMounted(async () => {
 }
 
 .scenario-card {
+  display: flex;
+  flex-direction: column;
   padding: 20px 16px 16px;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 20px;
@@ -167,6 +169,10 @@ onMounted(async () => {
 
 .scenario-card__content {
   margin-bottom: 18px;
+}
+
+.scenario-card :deep(.base-button) {
+  margin-top: auto;
 }
 
 .scenario-card__title {
@@ -201,6 +207,49 @@ onMounted(async () => {
 @media (min-width: 430px) {
   .scenario-list__title {
     font-size: 2.15rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .scenario-list {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .scenario-list__title {
+    font-size: clamp(2.15rem, 2.6vw, 2.5rem);
+  }
+
+  .scenario-list__subtitle {
+    font-size: 1.125rem;
+  }
+
+  .scenario-list__cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch;
+    margin-top: 28px;
+  }
+
+  .scenario-card {
+    height: 100%;
+  }
+
+  .scenario-card__content {
+    flex: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scenario-list {
+    max-width: 1040px;
+  }
+
+  .scenario-card {
+    padding: 24px 20px 20px;
   }
 }
 </style>

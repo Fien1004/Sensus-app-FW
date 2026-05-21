@@ -77,7 +77,7 @@ function finishScenario() {
 </script>
 
 <template>
-	<ScreenContainer size="narrow">
+	<ScreenContainer size="wide">
 		<section class="end-view">
 			<div v-if="isLoading" class="end-view__empty">
 				<h1 class="end-view__title">Laden…</h1>
@@ -133,6 +133,12 @@ function finishScenario() {
 	flex-direction: column;
 	padding-top: 24px;
 	padding-bottom: 24px;
+}
+
+.end-view__content,
+.end-view__footer,
+.end-view__empty {
+	width: 100%;
 }
 
 .end-view__content {
@@ -211,5 +217,49 @@ function finishScenario() {
 .end-view__footer {
 	margin-top: auto;
 	padding-top: 24px;
+}
+
+@media (min-width: 768px) {
+	.end-view {
+		max-width: 760px;
+		margin: 0 auto;
+		padding-top: 40px;
+		padding-bottom: 40px;
+		min-height: calc(100dvh - 32px);
+	}
+
+	.end-view__title {
+		font-size: clamp(2rem, 3vw, 2.5rem);
+	}
+
+	.end-view__description,
+	.end-view__extra,
+	.end-view__remember-list li {
+		font-size: 1.05rem;
+	}
+
+	.end-view__remember-title {
+		font-size: clamp(2rem, 3vw, 2.5rem);
+	}
+
+	.end-view__footer {
+		max-width: 760px;
+		margin: auto auto 0;
+		padding-top: 32px;
+	}
+
+	.end-view__empty {
+		margin-top: 40px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.end-view {
+		max-width: 760px;
+	}
+	
+	.end-view__footer {
+		max-width: 760px;
+	}
 }
 </style>

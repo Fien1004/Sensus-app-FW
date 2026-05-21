@@ -33,7 +33,7 @@ function stopScenario() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="safe-exit">
       <div class="safe-exit__icon-wrap">
         <img :src="PauseIcon" alt="" class="safe-exit__icon" aria-hidden="true" />
@@ -120,5 +120,34 @@ function stopScenario() {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .safe-exit {
+    max-width: 760px;
+    margin: 0 auto;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .safe-exit__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .safe-exit__text {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+
+  .safe-exit__note {
+    font-size: 0.95rem;
+  }
+
+  .safe-exit__icon {
+    width: 112px;
+    height: 112px;
+  }
 }
 </style>

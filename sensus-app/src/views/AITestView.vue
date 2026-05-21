@@ -69,4 +69,24 @@ button {
   display: grid;
   gap: 4px;
 }
+
+@media (min-width: 768px) {
+  .ai-test-view {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 16px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  textarea {
+    min-height: 180px;
+  }
+
+  button {
+    min-width: 160px;
+  }
+}
 </style>

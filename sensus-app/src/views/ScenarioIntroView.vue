@@ -47,7 +47,7 @@ function goSafeExit() {
 </script>
 
 <template>
-  <ScreenContainer size="narrow">
+  <ScreenContainer size="medium">
     <section class="scenario-intro">
       <button
         type="button"
@@ -123,6 +123,11 @@ function goSafeExit() {
   padding-bottom: 24px;
 }
 
+.scenario-intro__content,
+.scenario-intro__footer {
+  width: 100%;
+}
+
 .scenario-intro__back {
   display: inline-flex;
   align-items: center;
@@ -186,5 +191,29 @@ function goSafeExit() {
 .scenario-intro__footer {
   margin-top: auto;
   padding-top: 32px;
+}
+
+@media (min-width: 768px) {
+  .scenario-intro {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    min-height: calc(100dvh - 32px);
+  }
+
+  .scenario-intro__title {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  .scenario-intro__description,
+  .scenario-intro__body,
+  .scenario-intro__note {
+    font-size: 1.05rem;
+  }
+
+  .scenario-intro__content {
+    margin-top: 56px;
+  }
 }
 </style>

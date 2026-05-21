@@ -27,7 +27,7 @@ function confirmStop() {
 </script>
 
 <template>
-	<ScreenContainer size="narrow">
+	<ScreenContainer size="medium">
 		<section class="stop-confirm">
 			<h1 class="stop-confirm__title">
 				Ben je zeker dat je wilt stoppen?
@@ -88,5 +88,24 @@ function confirmStop() {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+@media (min-width: 768px) {
+	.stop-confirm {
+		max-width: 760px;
+		margin: 0 auto;
+		justify-content: center;
+		padding-top: 0;
+		padding-bottom: 0;
+		min-height: calc(100dvh - 32px);
+	}
+
+	.stop-confirm__title {
+		font-size: clamp(2rem, 3vw, 2.5rem);
+	}
+
+	.stop-confirm__note {
+		font-size: 0.95rem;
+	}
 }
 </style>

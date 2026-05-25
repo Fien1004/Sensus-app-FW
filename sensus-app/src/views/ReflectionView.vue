@@ -5,9 +5,11 @@ import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioBySlug } from '../services/scenarioService'
 import { markStepStart, trackEvent } from '../services/analyticsService'
+import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
+const { ensureSession, getSessionId } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const scenario = ref(null)
@@ -28,7 +30,6 @@ const reflectionStep = computed(() => {
 const progress = computed(() => reflectionStep.value?.progress ?? 0)
 
 const answer = ref('')
-const sessionId = localStorage.getItem('sessionId')
 const currentStepId = computed(() => requestedStep.value ?? reflectionStep.value?.id ?? 'reflection')
 
 function updateStoredProgress() {
@@ -46,8 +47,13 @@ onMounted(async () => {
   try {
     scenario.value = await getScenarioBySlug(scenarioId.value)
     updateStoredProgress()
-    if (sessionId && currentStepId.value) {
-      markStepStart(sessionId, currentStepId.value)
+    await ensureSession({
+      scenarioId: scenarioId.value,
+      totalSteps: scenario.value?.engine_json?.steps?.length ?? 0,
+    })
+    const activeSessionId = getSessionId()
+    if (activeSessionId && currentStepId.value) {
+      markStepStart(activeSessionId, currentStepId.value)
     }
   } catch (error) {
     console.error(error)
@@ -58,13 +64,17 @@ onMounted(async () => {
 })
 
 async function saveReflection() {
-  if (!sessionId) return
+  const activeSessionId = getSessionId()
+  if (!activeSessionId) {
+    console.warn('No session id available')
+    return
+  }
 
   const reflectionAnswer = answer.value.trim()
   if (!reflectionAnswer) return
 
   await trackEvent({
-    sessionId,
+    sessionId: activeSessionId,
     stepId: currentStepId.value || 'reflection',
     type: 'reflection',
     value: reflectionAnswer,

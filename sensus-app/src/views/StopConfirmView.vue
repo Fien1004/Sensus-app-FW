@@ -4,16 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { stopSession } from '../services/analyticsService'
+import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
+const { ensureSession, getSessionId, clearSessionId } = useAnalyticsSession()
 
 const returnTo = computed(() => {
 	const target = route.query.returnTo
 	return typeof target === 'string' && target.startsWith('/') ? target : null
 })
-
-const sessionId = localStorage.getItem('sessionId')
 
 function getStoredNumber(key) {
 	const value = Number(localStorage.getItem(key))
@@ -30,15 +30,22 @@ function continueScenario() {
 }
 
 async function confirmStop() {
-	if (sessionId) {
+	await ensureSession({
+		scenarioId: route.params.id ? String(route.params.id) : '',
+		totalSteps: Number(localStorage.getItem('scenarioTotalSteps') || 0),
+	})
+
+	const activeSessionId = getSessionId()
+	if (activeSessionId) {
 		const result = await stopSession({
-			sessionId,
+			sessionId: activeSessionId,
 			stoppedReason: 'user_stopped',
 			completedSteps: getStoredNumber('scenarioCompletedSteps'),
 			totalSteps: getStoredNumber('scenarioTotalSteps'),
 		})
 
 		if (result.ok) {
+			clearSessionId()
 			localStorage.removeItem('sessionId')
 			localStorage.removeItem('scenarioCompletedSteps')
 			localStorage.removeItem('scenarioTotalSteps')

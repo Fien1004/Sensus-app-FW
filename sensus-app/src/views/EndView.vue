@@ -6,16 +6,17 @@ import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg'
 import { getScenarioBySlug } from '../services/scenarioService'
 import { completeSession } from '../services/analyticsService'
+import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
+const { ensureSession, getSessionId, clearSessionId } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const stepId = computed(() => String(route.query.step ?? ''))
 
 const scenario = ref(null)
 const isLoading = ref(true)
-const sessionId = localStorage.getItem('sessionId')
 const analyticsSaved = ref(false)
 
 const endStep = computed(() => {
@@ -42,12 +43,17 @@ onMounted(() => {
 			isLoading.value = false
 		}
 
+		await ensureSession({
+			scenarioId: scenarioId.value,
+			totalSteps: totalSteps.value,
+		})
+
 		if (analyticsSaved.value || !endStep.value) {
 			return
 		}
 
 		const result = await completeSession({
-			sessionId,
+			sessionId: getSessionId(),
 			completedSteps: totalSteps.value,
 			totalSteps: totalSteps.value,
 		})
@@ -55,6 +61,7 @@ onMounted(() => {
 		analyticsSaved.value = result.ok
 
 		if (result.ok) {
+			clearSessionId()
 			localStorage.removeItem('sessionId')
 			localStorage.removeItem('scenarioCompletedSteps')
 			localStorage.removeItem('scenarioTotalSteps')

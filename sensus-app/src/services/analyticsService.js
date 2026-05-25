@@ -130,7 +130,7 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
 
   const { data, error } = await supabase
     .from(SESSIONS_TABLE)
-    .insert([payload])
+    .insert(payload)
     .select()
     .single()
 
@@ -139,7 +139,6 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
     return { ok: false, data: null, error }
   }
 
-  markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
   console.info('[Analytics] createSession result', {
     ok: true,
     sessionId: data?.id ?? null,
@@ -160,6 +159,7 @@ export async function trackEvent({
   metadata,
 }) {
   if (!sessionId || !type) {
+    console.warn('No session id available')
     const error = new Error('Missing sessionId or type')
     warnAnalyticsError('Analytics: trackEvent missing required fields', error)
     return { ok: false, data: null, error }
@@ -183,7 +183,7 @@ export async function trackEvent({
 
   const { data, error } = await supabase
     .from(EVENTS_TABLE)
-    .insert([payload])
+    .insert(payload)
     .select()
     .single()
 
@@ -205,6 +205,7 @@ export async function trackEvent({
 
 export async function completeSession({ sessionId, completedSteps, totalSteps }) {
   if (!sessionId) {
+    console.warn('No session id available')
     const error = new Error('Missing sessionId')
     warnAnalyticsError('Analytics: completeSession missing sessionId', error)
     return { ok: false, data: null, error }
@@ -249,6 +250,7 @@ export async function completeSession({ sessionId, completedSteps, totalSteps })
 
 export async function stopSession({ sessionId, stoppedReason, completedSteps, totalSteps }) {
   if (!sessionId) {
+    console.warn('No session id available')
     const error = new Error('Missing sessionId')
     warnAnalyticsError('Analytics: stopSession missing sessionId', error)
     return { ok: false, data: null, error }

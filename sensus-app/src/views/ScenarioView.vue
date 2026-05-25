@@ -5,13 +5,15 @@ import PenIcon from '../assets/icons/pen.svg'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioBySlug } from '../services/scenarioService'
-import { createSession, markStepStart, trackEvent } from '../services/analyticsService'
+import { markStepStart, trackEvent } from '../services/analyticsService'
+import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 import { useScenarioAI } from '../composables/useScenarioAI'
 import { intentToNode } from '../utils/intentToNode'
 
 const route = useRoute()
 const router = useRouter()
 const { analyzeResponse } = useScenarioAI()
+const { ensureSession, getSessionId } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const slug = route.params.id
@@ -20,7 +22,6 @@ const paramStep = computed(() => route.params?.step)
 
 const scenario = ref(null)
 const isLoading = ref(true)
-const sessionId = ref(localStorage.getItem('sessionId'))
 const visitedStepIds = ref([])
 
 const totalSteps = computed(() => scenario.value?.steps?.length ?? 0)
@@ -100,22 +101,15 @@ function markVisitedStep(stepId) {
 
 watch(currentStepId, (stepId) => {
   markVisitedStep(stepId)
-  if (sessionId.value && stepId) {
-    markStepStart(sessionId.value, stepId)
+  const activeSessionId = getSessionId()
+  if (activeSessionId && stepId) {
+    markStepStart(activeSessionId, stepId)
   }
 }, { immediate: true })
 
 async function startSession() {
-  if (sessionId.value) {
-    persistScenarioProgress()
-    return
-  }
-
-  const profile = getProfileData()
-  const result = await createSession({
+  const result = await ensureSession({
     scenarioId: scenarioId.value,
-    age: profile.age ?? null,
-    gender: profile.gender ?? 'unknown',
     totalSteps: totalSteps.value,
   })
 
@@ -124,13 +118,10 @@ async function startSession() {
     return
   }
 
-  sessionId.value = result.data?.id ?? null
+  const activeSessionId = getSessionId()
 
-  if (sessionId.value) {
-    localStorage.setItem('sessionId', sessionId.value)
-    if (currentStepId.value) {
-      markStepStart(sessionId.value, currentStepId.value)
-    }
+  if (activeSessionId && currentStepId.value) {
+    markStepStart(activeSessionId, currentStepId.value)
   }
 
   persistScenarioProgress()
@@ -229,7 +220,7 @@ async function handleChoice(option) {
   if (!choiceValue) return
 
   await trackEvent({
-    sessionId: sessionId.value,
+    sessionId: getSessionId(),
     stepId: currentStepId.value,
     type: 'choice',
     value: choiceValue,
@@ -298,7 +289,7 @@ async function handleTextNext() {
     if (result?.nextNode === 'node_fallback') {
       console.log('AI requested fallback, navigating to node_fallback')
       await trackEvent({
-        sessionId: sessionId.value,
+        sessionId: getSessionId(),
         stepId: currentStepId.value,
         type: 'custom_input',
         value: userInput,
@@ -311,7 +302,7 @@ async function handleTextNext() {
     }
 
     await trackEvent({
-      sessionId: sessionId.value,
+      sessionId: getSessionId(),
       stepId: currentStepId.value,
       type: 'custom_input',
       value: userInput,
@@ -347,7 +338,7 @@ async function handleFallbackChoice(choice) {
   if (!choice) return
 
   await trackEvent({
-    sessionId: sessionId.value,
+    sessionId: getSessionId(),
     stepId: currentStepId.value,
     type: 'choice',
     value: choice.label,

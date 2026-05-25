@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioBySlug } from '../services/scenarioService'
-import { supabase } from '../lib/supabase'
+import { markStepStart, trackEvent } from '../services/analyticsService'
 
 const route = useRoute()
 const router = useRouter()
@@ -31,9 +31,24 @@ const answer = ref('')
 const sessionId = localStorage.getItem('sessionId')
 const currentStepId = computed(() => requestedStep.value ?? reflectionStep.value?.id ?? 'reflection')
 
+function updateStoredProgress() {
+  const steps = scenario.value?.engine_json?.steps ?? []
+  const stepIndex = steps.findIndex((step) => step.id === currentStepId.value)
+
+  if (stepIndex >= 0) {
+    localStorage.setItem('scenarioCompletedSteps', String(stepIndex + 1))
+  }
+
+  localStorage.setItem('scenarioTotalSteps', String(steps.length || 0))
+}
+
 onMounted(async () => {
   try {
     scenario.value = await getScenarioBySlug(scenarioId.value)
+    updateStoredProgress()
+    if (sessionId && currentStepId.value) {
+      markStepStart(sessionId, currentStepId.value)
+    }
   } catch (error) {
     console.error(error)
     scenario.value = null
@@ -48,20 +63,12 @@ async function saveReflection() {
   const reflectionAnswer = answer.value.trim()
   if (!reflectionAnswer) return
 
-  const { error } = await supabase
-    .from('events')
-    .insert([
-      {
-        session_id: sessionId,
-        step_id: currentStepId.value || 'reflection',
-        type: 'reflection',
-        value: 'submitted'
-      }
-    ])
-
-  if (error) {
-    console.error(error)
-  }
+  await trackEvent({
+    sessionId,
+    stepId: currentStepId.value || 'reflection',
+    type: 'reflection',
+    value: reflectionAnswer,
+  })
 }
 
 function goSafeExit() {
@@ -70,6 +77,7 @@ function goSafeExit() {
 
 async function handleNext() {
   await saveReflection()
+  updateStoredProgress()
 
   const nextId = reflectionStep.value?.next
   if (!nextId) return

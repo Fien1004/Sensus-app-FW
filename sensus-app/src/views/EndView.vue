@@ -5,8 +5,7 @@ import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg'
 import { getScenarioBySlug } from '../services/scenarioService'
-import { supabase } from '../lib/supabase'
-import { saveAnonymousScenarioAnalytics } from '../services/scenarioAnalytics'
+import { completeSession } from '../services/analyticsService'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,20 +27,9 @@ const endStep = computed(() => {
 	) ?? null
 })
 
+const totalSteps = computed(() => scenario.value?.engine_json?.steps?.length ?? 0)
+
 const progress = computed(() => 100)
-
-async function endSession() {
-	if (!sessionId) return
-
-	const { error } = await supabase
-		.from('sessions')
-		.update({ ended_at: new Date() })
-		.eq('id', sessionId)
-
-	if (error) {
-		console.error(error)
-	}
-}
 
 onMounted(() => {
 	(async () => {
@@ -54,20 +42,23 @@ onMounted(() => {
 			isLoading.value = false
 		}
 
-		await endSession()
-
 		if (analyticsSaved.value || !endStep.value) {
 			return
 		}
 
-		const outcomePath = endStep.value.path ?? endStep.value.id ?? 'unknown'
-		const result = await saveAnonymousScenarioAnalytics({
-			scenarioId: scenarioId.value,
-			outcomePath,
-			completionStatus: 'completed',
+		const result = await completeSession({
+			sessionId,
+			completedSteps: totalSteps.value,
+			totalSteps: totalSteps.value,
 		})
 
 		analyticsSaved.value = result.ok
+
+		if (result.ok) {
+			localStorage.removeItem('sessionId')
+			localStorage.removeItem('scenarioCompletedSteps')
+			localStorage.removeItem('scenarioTotalSteps')
+		}
 	})()
 })
 

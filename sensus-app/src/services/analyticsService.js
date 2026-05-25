@@ -125,6 +125,7 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
   }
 
   markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
+  console.log('Created Supabase session:', data?.id)
   console.info('[Analytics] createSession result', {
     ok: true,
     sessionId: data?.id ?? null,
@@ -152,6 +153,7 @@ export async function trackEvent({
     return { ok: false, data: null, error }
   }
 
+  console.log('Tracking event with session:', sessionId)
   console.info('[Analytics] trackEvent sessionId', sessionId)
 
   const stepStartedAt = getStepStartedAt(sessionId, stepId)
@@ -199,6 +201,8 @@ export async function completeSession({ sessionId, completedSteps, totalSteps })
     warnAnalyticsError('Analytics: completeSession missing sessionId', error)
     return { ok: false, data: null, error }
   }
+
+  console.log('Completing session:', sessionId)
 
   const endedAt = nowIso()
   const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)

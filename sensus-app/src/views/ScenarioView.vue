@@ -114,11 +114,12 @@ async function startSession() {
   })
 
   if (!result.ok) {
+    console.warn('Analytics createSession failed; scenario flow continues without tracking')
     persistScenarioProgress()
     return
   }
 
-  const activeSessionId = getSessionId()
+  const activeSessionId = result.data?.id ?? ''
 
   if (activeSessionId && currentStepId.value) {
     markStepStart(activeSessionId, currentStepId.value)

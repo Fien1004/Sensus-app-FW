@@ -5,6 +5,15 @@ const sessionId = ref('')
 const sessionStartedAt = ref('')
 const sessionPromise = ref(null)
 
+function clearLegacySessionStorage() {
+  try {
+    localStorage.removeItem('sessionId')
+    sessionStorage.removeItem('sessionId')
+  } catch (error) {
+    console.warn('[Analytics] could not clear legacy session storage', error)
+  }
+}
+
 function readProfile() {
   try {
     return JSON.parse(localStorage.getItem('profile') || '{}')
@@ -17,6 +26,8 @@ function readProfile() {
 function persistSessionId(value) {
   sessionId.value = value || ''
 }
+
+clearLegacySessionStorage()
 
 export function useAnalyticsSession() {
   async function ensureSession({ scenarioId, totalSteps }) {

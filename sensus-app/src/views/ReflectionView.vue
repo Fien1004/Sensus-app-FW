@@ -9,7 +9,7 @@ import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
-const { ensureSession, getSessionId } = useAnalyticsSession()
+const { ensureSession, getSessionId, setActiveSessionId } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const scenario = ref(null)

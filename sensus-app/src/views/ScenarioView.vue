@@ -1,11 +1,11 @@
 <script setup>
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PenIcon from '../assets/icons/pen.svg'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import { getScenarioBySlug } from '../services/scenarioService'
-import { supabase } from '../lib/supabase'
+import { createSession, markStepStart, trackEvent } from '../services/analyticsService'
 import { useScenarioAI } from '../composables/useScenarioAI'
 import { intentToNode } from '../utils/intentToNode'
 
@@ -20,6 +20,10 @@ const paramStep = computed(() => route.params?.step)
 
 const scenario = ref(null)
 const isLoading = ref(true)
+const sessionId = ref(localStorage.getItem('sessionId'))
+const visitedStepIds = ref([])
+
+const totalSteps = computed(() => scenario.value?.steps?.length ?? 0)
 
 const currentStepId = computed(() => {
   return paramStep.value ?? queryStep.value ?? scenario.value?.steps?.[0]?.id ?? null
@@ -66,33 +70,70 @@ const fallbackChoices = [
 ]
 
 const textAnswer = ref('')
-const sessionId = ref(null)
 
-async function startSession() {
-  const profile = JSON.parse(localStorage.getItem('profile') || '{}')
+function getProfileData() {
+  try {
+    return JSON.parse(localStorage.getItem('profile') || '{}')
+  } catch (error) {
+    console.warn('Could not parse profile from localStorage', error)
+    return {}
+  }
+}
 
-  const { data, error } = await supabase
-    .from('sessions')
-    .insert([
-      {
-        scenario_id: scenarioId.value,
-        age: profile.age || null,
-        gender: profile.gender || 'unknown',
-        started_at: new Date()
-      }
-    ])
-    .select()
+function persistScenarioProgress() {
+  localStorage.setItem('scenarioTotalSteps', String(totalSteps.value || 0))
+  localStorage.setItem('scenarioCompletedSteps', String(visitedStepIds.value.length || 0))
+}
 
-  if (error) {
-    console.error(error)
+function markVisitedStep(stepId) {
+  if (!stepId || stepId === 'node_fallback') {
+    persistScenarioProgress()
     return
   }
 
-  sessionId.value = data?.[0]?.id ?? null
+  if (!visitedStepIds.value.includes(stepId)) {
+    visitedStepIds.value.push(stepId)
+  }
+
+  persistScenarioProgress()
+}
+
+watch(currentStepId, (stepId) => {
+  markVisitedStep(stepId)
+  if (sessionId.value && stepId) {
+    markStepStart(sessionId.value, stepId)
+  }
+}, { immediate: true })
+
+async function startSession() {
+  if (sessionId.value) {
+    persistScenarioProgress()
+    return
+  }
+
+  const profile = getProfileData()
+  const result = await createSession({
+    scenarioId: scenarioId.value,
+    age: profile.age ?? null,
+    gender: profile.gender ?? 'unknown',
+    totalSteps: totalSteps.value,
+  })
+
+  if (!result.ok) {
+    persistScenarioProgress()
+    return
+  }
+
+  sessionId.value = result.data?.id ?? null
 
   if (sessionId.value) {
     localStorage.setItem('sessionId', sessionId.value)
+    if (currentStepId.value) {
+      markStepStart(sessionId.value, currentStepId.value)
+    }
   }
+
+  persistScenarioProgress()
 }
 
 onMounted(async () => {
@@ -111,25 +152,10 @@ onMounted(async () => {
     isLoading.value = false
   }
 
-  startSession()
+  if (scenario.value) {
+    await startSession()
+  }
 })
-
-async function saveEvent(stepId, type, value) {
-  if (!sessionId.value) return
-
-  const { error } = await supabase
-    .from('events')
-    .insert([
-      {
-        session_id: sessionId.value,
-        step_id: stepId,
-        type,
-        value
-      }
-    ])
-
-  if (error) console.error(error)
-}
 
 watchEffect(() => {
   if (currentStep.value?.type === 'reflection') {
@@ -199,10 +225,17 @@ async function handleChoice(option) {
   const next = option?.next
   if (!next) return
 
-  const choiceValue = option?.id ?? option?.label ?? option?.text
+  const choiceValue = option?.label ?? option?.id ?? option?.text
   if (!choiceValue) return
 
-  await saveEvent(currentStepId.value, 'choice', choiceValue)
+  await trackEvent({
+    sessionId: sessionId.value,
+    stepId: currentStepId.value,
+    type: 'choice',
+    value: choiceValue,
+    path: option?.path ?? option?.next ?? null,
+    metadata: option,
+  })
   navigateToStep(next)
 }
 
@@ -264,10 +297,27 @@ async function handleTextNext() {
     // If AI explicitly requests fallback, show fallback (branching step)
     if (result?.nextNode === 'node_fallback') {
       console.log('AI requested fallback, navigating to node_fallback')
+      await trackEvent({
+        sessionId: sessionId.value,
+        stepId: currentStepId.value,
+        type: 'custom_input',
+        value: userInput,
+        path: 'node_fallback',
+        metadata: result,
+      })
       textAnswer.value = ''
       navigateToStep('node_fallback')
       return
     }
+
+    await trackEvent({
+      sessionId: sessionId.value,
+      stepId: currentStepId.value,
+      type: 'custom_input',
+      value: userInput,
+      path: currentStep.value?.next ?? result?.nextNode ?? null,
+      metadata: result,
+    })
 
     // In all other cases, follow the scenario's defined next step
     const next = currentStep.value?.next
@@ -296,7 +346,14 @@ async function handleTextNext() {
 async function handleFallbackChoice(choice) {
   if (!choice) return
 
-  await saveEvent(currentStepId.value, 'choice', choice.label)
+  await trackEvent({
+    sessionId: sessionId.value,
+    stepId: currentStepId.value,
+    type: 'choice',
+    value: choice.label,
+    path: choice?.next ?? choice?.action ?? null,
+    metadata: choice,
+  })
 
   if (choice.action === 'safe-exit') {
     goSafeExit()

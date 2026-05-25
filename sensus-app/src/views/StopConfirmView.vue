@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
+import { stopSession } from '../services/analyticsService'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,6 +12,13 @@ const returnTo = computed(() => {
 	const target = route.query.returnTo
 	return typeof target === 'string' && target.startsWith('/') ? target : null
 })
+
+const sessionId = localStorage.getItem('sessionId')
+
+function getStoredNumber(key) {
+	const value = Number(localStorage.getItem(key))
+	return Number.isFinite(value) ? value : null
+}
 
 function continueScenario() {
 	if (returnTo.value) {
@@ -21,7 +29,22 @@ function continueScenario() {
 	router.replace({ name: 'scenario-list' })
 }
 
-function confirmStop() {
+async function confirmStop() {
+	if (sessionId) {
+		const result = await stopSession({
+			sessionId,
+			stoppedReason: 'user_stopped',
+			completedSteps: getStoredNumber('scenarioCompletedSteps'),
+			totalSteps: getStoredNumber('scenarioTotalSteps'),
+		})
+
+		if (result.ok) {
+			localStorage.removeItem('sessionId')
+			localStorage.removeItem('scenarioCompletedSteps')
+			localStorage.removeItem('scenarioTotalSteps')
+		}
+	}
+
 	router.replace({ name: 'scenario-list' })
 }
 </script>

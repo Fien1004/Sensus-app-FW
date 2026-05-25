@@ -35,7 +35,7 @@ function removeLocalStorageValue(key) {
 }
 
 function warnAnalyticsError(message, error) {
-  console.warn(message, error)
+  console.error(message, error)
 }
 
 function getDurationSeconds(startedAt, endedAt) {
@@ -68,6 +68,7 @@ export function markSessionStart(sessionId, startedAt = nowIso()) {
   }
 
   setLocalStorageValue(SESSION_STARTED_AT_KEY, startedAt)
+  console.debug('[Analytics] session start marked', { sessionId, startedAt })
 
   return { ok: true, data: startedAt, error: null }
 }
@@ -78,6 +79,7 @@ export function markStepStart(sessionId, stepId, startedAt = nowIso()) {
   }
 
   setLocalStorageValue(getStepStartKey(sessionId, stepId), startedAt)
+  console.debug('[Analytics] step start marked', { sessionId, stepId, startedAt })
 
   return { ok: true, data: startedAt, error: null }
 }
@@ -138,6 +140,12 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
   }
 
   markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
+  console.info('[Analytics] createSession result', {
+    ok: true,
+    sessionId: data?.id ?? null,
+    scenarioId,
+    totalSteps: payload.total_steps,
+  })
 
   return { ok: true, data, error: null }
 }
@@ -184,6 +192,14 @@ export async function trackEvent({
     return { ok: false, data: null, error }
   }
 
+  console.info('[Analytics] trackEvent result', {
+    ok: true,
+    sessionId,
+    stepId: stepId ?? null,
+    type,
+    duration_seconds: resolvedDurationSeconds,
+  })
+
   return { ok: true, data, error: null }
 }
 
@@ -220,6 +236,13 @@ export async function completeSession({ sessionId, completedSteps, totalSteps })
   }
 
   removeLocalStorageValue(SESSION_STARTED_AT_KEY)
+  console.info('[Analytics] completeSession result', {
+    ok: true,
+    sessionId,
+    duration_seconds: durationSeconds,
+    completed_steps: completedSteps ?? totalSteps ?? 0,
+    total_steps: totalSteps ?? 0,
+  })
 
   return { ok: true, data, error: null }
 }
@@ -257,6 +280,14 @@ export async function stopSession({ sessionId, stoppedReason, completedSteps, to
   }
 
   removeLocalStorageValue(SESSION_STARTED_AT_KEY)
+  console.info('[Analytics] stopSession result', {
+    ok: true,
+    sessionId,
+    stoppedReason: stoppedReason ?? 'stopped',
+    duration_seconds: durationSeconds,
+    completed_steps: completedSteps ?? 0,
+    total_steps: totalSteps ?? 0,
+  })
 
   return { ok: true, data, error: null }
 }

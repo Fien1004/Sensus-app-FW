@@ -62,7 +62,6 @@ onMounted(() => {
 
 		if (result.ok) {
 			clearSessionId()
-			localStorage.removeItem('sessionId')
 			localStorage.removeItem('scenarioCompletedSteps')
 			localStorage.removeItem('scenarioTotalSteps')
 		}

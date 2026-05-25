@@ -64,9 +64,14 @@ onMounted(async () => {
 })
 
 async function saveReflection() {
+  await ensureSession({
+    scenarioId: scenarioId.value,
+    totalSteps: scenario.value?.engine_json?.steps?.length ?? 0,
+  })
+
   const activeSessionId = getSessionId()
   if (!activeSessionId) {
-    console.warn('No session id available')
+    console.warn('Analytics skipped: no valid Supabase session id')
     return
   }
 

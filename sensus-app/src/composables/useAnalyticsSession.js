@@ -1,7 +1,8 @@
 import { ref } from 'vue'
 import { createSession, markSessionStart } from '../services/analyticsService'
 
-const sessionId = ref(localStorage.getItem('sessionId') || '')
+const sessionId = ref('')
+const sessionStartedAt = ref('')
 const sessionPromise = ref(null)
 
 function readProfile() {
@@ -15,16 +16,6 @@ function readProfile() {
 
 function persistSessionId(value) {
   sessionId.value = value || ''
-
-  try {
-    if (value) {
-      localStorage.setItem('sessionId', value)
-    } else {
-      localStorage.removeItem('sessionId')
-    }
-  } catch (error) {
-    console.warn('[Analytics] could not persist sessionId', error)
-  }
 }
 
 export function useAnalyticsSession() {
@@ -55,6 +46,7 @@ export function useAnalyticsSession() {
 
         const createdSessionId = result.data?.id ?? ''
         persistSessionId(createdSessionId)
+        sessionStartedAt.value = result.data?.started_at ?? ''
 
         if (createdSessionId) {
           markSessionStart(createdSessionId, result.data?.started_at)
@@ -76,13 +68,19 @@ export function useAnalyticsSession() {
     return sessionId.value || ''
   }
 
+  function getSessionStartedAt() {
+    return sessionStartedAt.value || ''
+  }
+
   function clearSessionId() {
     persistSessionId('')
+    sessionStartedAt.value = ''
   }
 
   return {
     ensureSession,
     getSessionId,
+    getSessionStartedAt,
     clearSessionId,
   }
 }

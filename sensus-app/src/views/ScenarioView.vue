@@ -216,11 +216,18 @@ async function handleChoice(option) {
   const next = option?.next
   if (!next) return
 
+  await startSession()
+  const activeSessionId = getSessionId()
+  if (!activeSessionId) {
+    console.warn('Analytics skipped: no valid Supabase session id')
+    return
+  }
+
   const choiceValue = option?.label ?? option?.id ?? option?.text
   if (!choiceValue) return
 
   await trackEvent({
-    sessionId: getSessionId(),
+    sessionId: activeSessionId,
     stepId: currentStepId.value,
     type: 'choice',
     value: choiceValue,
@@ -288,8 +295,17 @@ async function handleTextNext() {
     // If AI explicitly requests fallback, show fallback (branching step)
     if (result?.nextNode === 'node_fallback') {
       console.log('AI requested fallback, navigating to node_fallback')
+      await startSession()
+      const activeSessionId = getSessionId()
+      if (!activeSessionId) {
+        console.warn('Analytics skipped: no valid Supabase session id')
+        textAnswer.value = ''
+        navigateToStep('node_fallback')
+        return
+      }
+
       await trackEvent({
-        sessionId: getSessionId(),
+        sessionId: activeSessionId,
         stepId: currentStepId.value,
         type: 'custom_input',
         value: userInput,
@@ -301,8 +317,17 @@ async function handleTextNext() {
       return
     }
 
+    await startSession()
+    const activeSessionId = getSessionId()
+    if (!activeSessionId) {
+      console.warn('Analytics skipped: no valid Supabase session id')
+      textAnswer.value = ''
+      navigateToStep(currentStep.value?.next)
+      return
+    }
+
     await trackEvent({
-      sessionId: getSessionId(),
+      sessionId: activeSessionId,
       stepId: currentStepId.value,
       type: 'custom_input',
       value: userInput,
@@ -337,8 +362,15 @@ async function handleTextNext() {
 async function handleFallbackChoice(choice) {
   if (!choice) return
 
+  await startSession()
+  const activeSessionId = getSessionId()
+  if (!activeSessionId) {
+    console.warn('Analytics skipped: no valid Supabase session id')
+    return
+  }
+
   await trackEvent({
-    sessionId: getSessionId(),
+    sessionId: activeSessionId,
     stepId: currentStepId.value,
     type: 'choice',
     value: choice.label,

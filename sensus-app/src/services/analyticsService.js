@@ -92,21 +92,6 @@ function getStepStartedAt(sessionId, stepId) {
   return getLocalStorageValue(getStepStartKey(sessionId, stepId))
 }
 
-async function getSessionStartedAt(sessionId) {
-  const { data, error } = await supabase
-    .from(SESSIONS_TABLE)
-    .select('started_at')
-    .eq('id', sessionId)
-    .single()
-
-  if (error) {
-    warnAnalyticsError('Analytics: unable to read session start time', error)
-    return { ok: false, data: null, error }
-  }
-
-  return { ok: true, data, error: null }
-}
-
 export async function createSession({ scenarioId, age, gender, totalSteps }) {
   if (!scenarioId) {
     const error = new Error('Missing scenarioId')
@@ -131,7 +116,7 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
   const { data, error } = await supabase
     .from(SESSIONS_TABLE)
     .insert(payload)
-    .select()
+    .select('id, started_at')
     .single()
 
   if (error) {
@@ -139,12 +124,14 @@ export async function createSession({ scenarioId, age, gender, totalSteps }) {
     return { ok: false, data: null, error }
   }
 
+  markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
   console.info('[Analytics] createSession result', {
     ok: true,
     sessionId: data?.id ?? null,
     scenarioId,
     totalSteps: payload.total_steps,
   })
+  console.info('[Analytics] createSession inserted id', data?.id ?? null)
 
   return { ok: true, data, error: null }
 }
@@ -159,11 +146,13 @@ export async function trackEvent({
   metadata,
 }) {
   if (!sessionId || !type) {
-    console.warn('No session id available')
+    console.warn('Analytics skipped: no valid Supabase session id')
     const error = new Error('Missing sessionId or type')
     warnAnalyticsError('Analytics: trackEvent missing required fields', error)
     return { ok: false, data: null, error }
   }
+
+  console.info('[Analytics] trackEvent sessionId', sessionId)
 
   const stepStartedAt = getStepStartedAt(sessionId, stepId)
   const computedDurationSeconds = getDurationSeconds(stepStartedAt, nowIso())
@@ -205,15 +194,14 @@ export async function trackEvent({
 
 export async function completeSession({ sessionId, completedSteps, totalSteps }) {
   if (!sessionId) {
-    console.warn('No session id available')
+    console.warn('Analytics skipped: no valid Supabase session id')
     const error = new Error('Missing sessionId')
     warnAnalyticsError('Analytics: completeSession missing sessionId', error)
     return { ok: false, data: null, error }
   }
 
-  const sessionResult = await getSessionStartedAt(sessionId)
   const endedAt = nowIso()
-  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY) ?? sessionResult.data?.started_at
+  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
   const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
 
   const { data, error } = await supabase
@@ -237,6 +225,7 @@ export async function completeSession({ sessionId, completedSteps, totalSteps })
   }
 
   removeLocalStorageValue(SESSION_STARTED_AT_KEY)
+  console.info('[Analytics] completeSession sessionId', sessionId)
   console.info('[Analytics] completeSession result', {
     ok: true,
     sessionId,
@@ -250,15 +239,14 @@ export async function completeSession({ sessionId, completedSteps, totalSteps })
 
 export async function stopSession({ sessionId, stoppedReason, completedSteps, totalSteps }) {
   if (!sessionId) {
-    console.warn('No session id available')
+    console.warn('Analytics skipped: no valid Supabase session id')
     const error = new Error('Missing sessionId')
     warnAnalyticsError('Analytics: stopSession missing sessionId', error)
     return { ok: false, data: null, error }
   }
 
-  const sessionResult = await getSessionStartedAt(sessionId)
   const endedAt = nowIso()
-  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY) ?? sessionResult.data?.started_at
+  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
   const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
 
   const { data, error } = await supabase

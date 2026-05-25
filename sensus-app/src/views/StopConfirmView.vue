@@ -36,20 +36,23 @@ async function confirmStop() {
 	})
 
 	const activeSessionId = getSessionId()
-	if (activeSessionId) {
-		const result = await stopSession({
-			sessionId: activeSessionId,
-			stoppedReason: 'user_stopped',
-			completedSteps: getStoredNumber('scenarioCompletedSteps'),
-			totalSteps: getStoredNumber('scenarioTotalSteps'),
-		})
+	if (!activeSessionId) {
+		console.warn('Analytics skipped: no valid Supabase session id')
+		router.replace({ name: 'scenario-list' })
+		return
+	}
 
-		if (result.ok) {
-			clearSessionId()
-			localStorage.removeItem('sessionId')
-			localStorage.removeItem('scenarioCompletedSteps')
-			localStorage.removeItem('scenarioTotalSteps')
-		}
+	const result = await stopSession({
+		sessionId: activeSessionId,
+		stoppedReason: 'user_stopped',
+		completedSteps: getStoredNumber('scenarioCompletedSteps'),
+		totalSteps: getStoredNumber('scenarioTotalSteps'),
+	})
+
+	if (result.ok) {
+		clearSessionId()
+		localStorage.removeItem('scenarioCompletedSteps')
+		localStorage.removeItem('scenarioTotalSteps')
 	}
 
 	router.replace({ name: 'scenario-list' })

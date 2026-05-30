@@ -1,0 +1,14 @@
+export function formatDate(date) {
+  if (!date) return ''
+
+  const parsedDate = new Date(date)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return ''
+  }
+
+  return parsedDate.toLocaleString('nl-BE', {
+    timeZone: 'Europe/Brussels',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}

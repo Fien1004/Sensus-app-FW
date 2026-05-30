@@ -1,9 +1,9 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-import BulbIcon from '../assets/icons/bulb.svg'
+import BulbIcon from '../assets/icons/bulb.svg?raw'
 import { getScenarioBySlug } from '../services/scenarioService'
 import { completeSession } from '../services/analyticsService'
 import { useAnalyticsSession } from '../composables/useAnalyticsSession'
@@ -28,9 +28,33 @@ const endStep = computed(() => {
 	) ?? null
 })
 
+const endData = computed(() => endStep.value)
+const rememberTitle = computed(() => endData.value?.rememberTitle?.trim() || 'Onthoud dit')
+const rememberItems = computed(() => Array.isArray(endData.value?.remember) ? endData.value.remember : [])
+const shouldShowRemember = computed(() => Boolean(endData.value?.rememberTitle?.trim() || rememberItems.value.length))
 const totalSteps = computed(() => scenario.value?.engine_json?.steps?.length ?? 0)
 
 const progress = computed(() => 100)
+
+const rememberIconMarkup = computed(() => BulbIcon.replace('fill="black"', 'fill="currentColor"'))
+
+watchEffect(() => {
+	if (!endData.value) return
+
+	console.log('endData', endData.value)
+
+	if (!endData.value.extraText?.trim()) {
+		console.warn('EndView: extraText ontbreekt of is leeg')
+	}
+
+	if (!endData.value.rememberTitle?.trim()) {
+		console.warn('EndView: rememberTitle ontbreekt of is leeg')
+	}
+
+	if (!Array.isArray(endData.value.remember)) {
+		console.warn('EndView: remember ontbreekt of is geen array')
+	}
+})
 
 onMounted(() => {
 	(async () => {
@@ -95,14 +119,14 @@ function finishScenario() {
 
 				<p v-if="endStep.extraText" class="end-view__extra">{{ endStep.extraText }}</p>
 
-				<section v-if="endStep.rememberTitle || endStep.remember?.length" class="end-view__remember">
-					<h2 v-if="endStep.rememberTitle" class="end-view__remember-title">
-						<img :src="BulbIcon" alt="" class="end-view__remember-icon" aria-hidden="true" />
-						<span>{{ endStep.rememberTitle }}</span>
+				<section v-if="shouldShowRemember" class="end-view__remember">
+					<h2 class="end-view__remember-title">
+						<span class="end-view__remember-icon" aria-hidden="true" v-html="rememberIconMarkup"></span>
+						<span>{{ rememberTitle }}</span>
 					</h2>
 
-					<ul v-if="endStep.remember?.length" class="end-view__remember-list">
-						<li v-for="(item, index) in endStep.remember" :key="index">
+					<ul v-if="rememberItems.length" class="end-view__remember-list">
+						<li v-for="(item, index) in rememberItems" :key="index">
 							{{ item }}
 						</li>
 					</ul>
@@ -173,6 +197,9 @@ function finishScenario() {
 
 .end-view__extra {
 	margin-top: 10px;
+	font-size: 0.9375rem;
+	line-height: 1.3;
+	color: var(--color-text-soft);
 }
 
 .end-view__remember {
@@ -193,6 +220,13 @@ function finishScenario() {
 .end-view__remember-icon {
 	width: 24px;
 	height: 24px;
+}
+
+.end-view__remember-icon :deep(svg) {
+	width: 24px;
+	height: 24px;
+	display: block;
+	fill: currentColor;
 }
 
 .end-view__remember-list {

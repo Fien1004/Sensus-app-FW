@@ -50,7 +50,7 @@ function getDurationSeconds(startedAt, endedAt) {
     return null
   }
 
-  return Math.max(0, Math.round((endTime - startTime) / 1000))
+  return Math.max(1, Math.round((endTime - startTime) / 1000))
 }
 
 function getStepStartKey(sessionId, stepId) {
@@ -59,7 +59,7 @@ function getStepStartKey(sessionId, stepId) {
 
 function toSafeDurationSeconds(durationSeconds) {
   const parsed = Number(durationSeconds)
-  return Number.isFinite(parsed) && parsed > 0 ? Math.max(0, Math.round(parsed)) : 0
+  return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.round(parsed)) : 1
 }
 
 export function markSessionStart(sessionId, startedAt = nowIso()) {
@@ -160,7 +160,7 @@ export async function trackEvent({
   const computedDurationSeconds = getDurationSeconds(stepStartedAt, nowIso())
   const resolvedDurationSeconds = durationSeconds != null
     ? toSafeDurationSeconds(durationSeconds)
-    : computedDurationSeconds ?? 0
+    : computedDurationSeconds ?? 1
 
   const payload = {
     session_id: sessionId,
@@ -193,6 +193,8 @@ export async function trackEvent({
 
   return { ok: true, data, error: null }
 }
+
+export const saveEvent = trackEvent
 
 export async function completeSession({ sessionId, completedSteps, totalSteps }) {
   if (!sessionId) {

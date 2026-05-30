@@ -1,9 +1,10 @@
 import { ref } from 'vue'
-import { createSession, markSessionStart } from '../services/analyticsService'
+import { completeSession, createSession, markSessionStart } from '../services/analyticsService'
 
 const sessionId = ref('')
 const sessionStartedAt = ref('')
 const sessionPromise = ref(null)
+const completedSessionId = ref('')
 
 function clearLegacySessionStorage() {
   try {
@@ -25,6 +26,10 @@ function readProfile() {
 
 function persistSessionId(value) {
   sessionId.value = value || ''
+}
+
+function markSessionCompleted(value) {
+  completedSessionId.value = value || ''
 }
 
 clearLegacySessionStorage()
@@ -75,6 +80,33 @@ export function useAnalyticsSession() {
     return sessionPromise.value
   }
 
+  async function completeCurrentSession({ completedSteps, totalSteps } = {}) {
+    if (sessionPromise.value) {
+      await sessionPromise.value
+    }
+
+    const activeSessionId = sessionId.value || ''
+    if (!activeSessionId) {
+      return { ok: false, data: null, error: new Error('Missing sessionId') }
+    }
+
+    if (completedSessionId.value === activeSessionId) {
+      return { ok: true, data: { id: activeSessionId }, error: null, alreadyCompleted: true }
+    }
+
+    const result = await completeSession({
+      sessionId: activeSessionId,
+      completedSteps,
+      totalSteps,
+    })
+
+    if (result.ok) {
+      markSessionCompleted(activeSessionId)
+    }
+
+    return result
+  }
+
   function getSessionId() {
     return sessionId.value || ''
   }
@@ -86,10 +118,12 @@ export function useAnalyticsSession() {
   function clearSessionId() {
     persistSessionId('')
     sessionStartedAt.value = ''
+    markSessionCompleted('')
   }
 
   return {
     ensureSession,
+    completeCurrentSession,
     getSessionId,
     getSessionStartedAt,
     clearSessionId,

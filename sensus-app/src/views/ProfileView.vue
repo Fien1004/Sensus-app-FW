@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import BaseSelect from '../components/base/BaseSelect.vue'
+import { withLoader } from '../composables/useAppLoader'
 
 const router = useRouter()
 
@@ -43,6 +44,22 @@ function updateGender(value) {
   gender.value = typeof value === 'string' ? value : ''
 }
 
+function loadProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem('profile') || '{}')
+
+    if (Number.isFinite(Number(profile.age))) {
+      age.value = Number(profile.age)
+    }
+
+    if (typeof profile.gender === 'string') {
+      gender.value = profile.gender
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 function saveProfile() {
   try {
     localStorage.setItem(
@@ -61,6 +78,12 @@ function goNext() {
   saveProfile()
   router.push({ name: 'warning' })
 }
+
+onMounted(() => {
+  void withLoader(async () => {
+    loadProfile()
+  })
+})
 </script>
 
 <template>

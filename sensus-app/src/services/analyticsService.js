@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { withLoader } from '../composables/useAppLoader'
 
 const SESSIONS_TABLE = 'sessions'
 const EVENTS_TABLE = 'events'
@@ -93,48 +94,50 @@ function getStepStartedAt(sessionId, stepId) {
 }
 
 export async function createSession({ scenarioId, age, gender, totalSteps }) {
-  if (!scenarioId) {
-    const error = new Error('Missing scenarioId')
-    warnAnalyticsError('Analytics: createSession missing scenarioId', error)
-    return { ok: false, data: null, error }
-  }
+  return withLoader(async () => {
+    if (!scenarioId) {
+      const error = new Error('Missing scenarioId')
+      warnAnalyticsError('Analytics: createSession missing scenarioId', error)
+      return { ok: false, data: null, error }
+    }
 
-  const payload = {
-    scenario_id: scenarioId,
-    age: age ?? null,
-    gender: gender ?? null,
-    started_at: nowIso(),
-    ended_at: null,
-    status: 'active',
-    duration_seconds: null,
-    completed: false,
-    stopped_reason: null,
-    completed_steps: 0,
-    total_steps: totalSteps ?? null,
-  }
+    const payload = {
+      scenario_id: scenarioId,
+      age: age ?? null,
+      gender: gender ?? null,
+      started_at: nowIso(),
+      ended_at: null,
+      status: 'active',
+      duration_seconds: null,
+      completed: false,
+      stopped_reason: null,
+      completed_steps: 0,
+      total_steps: totalSteps ?? null,
+    }
 
-  const { data, error } = await supabase
-    .from(SESSIONS_TABLE)
-    .insert(payload)
-    .select('id, started_at')
-    .single()
+    const { data, error } = await supabase
+      .from(SESSIONS_TABLE)
+      .insert(payload)
+      .select('id, started_at')
+      .single()
 
-  if (error) {
-    warnAnalyticsError('Analytics: createSession failed', error)
-    return { ok: false, data: null, error }
-  }
+    if (error) {
+      warnAnalyticsError('Analytics: createSession failed', error)
+      return { ok: false, data: null, error }
+    }
 
-  markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
-  console.log('Created Supabase session:', data?.id)
-  console.info('[Analytics] createSession result', {
-    ok: true,
-    sessionId: data?.id ?? null,
-    scenarioId,
-    totalSteps: payload.total_steps,
+    markSessionStart(data?.id ?? null, data?.started_at ?? payload.started_at)
+    console.log('Created Supabase session:', data?.id)
+    console.info('[Analytics] createSession result', {
+      ok: true,
+      sessionId: data?.id ?? null,
+      scenarioId,
+      totalSteps: payload.total_steps,
+    })
+    console.info('[Analytics] createSession inserted id', data?.id ?? null)
+
+    return { ok: true, data, error: null }
   })
-  console.info('[Analytics] createSession inserted id', data?.id ?? null)
-
-  return { ok: true, data, error: null }
 }
 
 export async function trackEvent({
@@ -146,144 +149,150 @@ export async function trackEvent({
   durationSeconds,
   metadata,
 }) {
-  if (!sessionId || !type) {
-    console.warn('Analytics skipped: no valid Supabase session id')
-    const error = new Error('Missing sessionId or type')
-    warnAnalyticsError('Analytics: trackEvent missing required fields', error)
-    return { ok: false, data: null, error }
-  }
+  return withLoader(async () => {
+    if (!sessionId || !type) {
+      console.warn('Analytics skipped: no valid Supabase session id')
+      const error = new Error('Missing sessionId or type')
+      warnAnalyticsError('Analytics: trackEvent missing required fields', error)
+      return { ok: false, data: null, error }
+    }
 
-  console.log('Tracking event with session:', sessionId)
-  console.info('[Analytics] trackEvent sessionId', sessionId)
+    console.log('Tracking event with session:', sessionId)
+    console.info('[Analytics] trackEvent sessionId', sessionId)
 
-  const stepStartedAt = getStepStartedAt(sessionId, stepId)
-  const computedDurationSeconds = getDurationSeconds(stepStartedAt, nowIso())
-  const resolvedDurationSeconds = durationSeconds != null
-    ? toSafeDurationSeconds(durationSeconds)
-    : computedDurationSeconds ?? 1
+    const stepStartedAt = getStepStartedAt(sessionId, stepId)
+    const computedDurationSeconds = getDurationSeconds(stepStartedAt, nowIso())
+    const resolvedDurationSeconds = durationSeconds != null
+      ? toSafeDurationSeconds(durationSeconds)
+      : computedDurationSeconds ?? 1
 
-  const payload = {
-    session_id: sessionId,
-    step_id: stepId ?? null,
-    type,
-    value: value ?? null,
-    path: path ?? null,
-    duration_seconds: resolvedDurationSeconds,
-    metadata: metadata ?? null,
-  }
+    const payload = {
+      session_id: sessionId,
+      step_id: stepId ?? null,
+      type,
+      value: value ?? null,
+      path: path ?? null,
+      duration_seconds: resolvedDurationSeconds,
+      metadata: metadata ?? null,
+    }
 
-  const { data, error } = await supabase
-    .from(EVENTS_TABLE)
-    .insert(payload)
-    .select()
-    .single()
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .insert(payload)
+      .select()
+      .single()
 
-  if (error) {
-    warnAnalyticsError('Analytics: trackEvent failed', error)
-    return { ok: false, data: null, error }
-  }
+    if (error) {
+      warnAnalyticsError('Analytics: trackEvent failed', error)
+      return { ok: false, data: null, error }
+    }
 
-  console.info('[Analytics] trackEvent result', {
-    ok: true,
-    sessionId,
-    stepId: stepId ?? null,
-    type,
-    duration_seconds: resolvedDurationSeconds,
+    console.info('[Analytics] trackEvent result', {
+      ok: true,
+      sessionId,
+      stepId: stepId ?? null,
+      type,
+      duration_seconds: resolvedDurationSeconds,
+    })
+
+    return { ok: true, data, error: null }
   })
-
-  return { ok: true, data, error: null }
 }
 
 export const saveEvent = trackEvent
 
 export async function completeSession({ sessionId, completedSteps, totalSteps }) {
-  if (!sessionId) {
-    console.warn('Analytics skipped: no valid Supabase session id')
-    const error = new Error('Missing sessionId')
-    warnAnalyticsError('Analytics: completeSession missing sessionId', error)
-    return { ok: false, data: null, error }
-  }
+  return withLoader(async () => {
+    if (!sessionId) {
+      console.warn('Analytics skipped: no valid Supabase session id')
+      const error = new Error('Missing sessionId')
+      warnAnalyticsError('Analytics: completeSession missing sessionId', error)
+      return { ok: false, data: null, error }
+    }
 
-  console.log('Completing session:', sessionId)
+    console.log('Completing session:', sessionId)
 
-  const endedAt = nowIso()
-  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
-  const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
+    const endedAt = nowIso()
+    const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
+    const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
 
-  const { data, error } = await supabase
-    .from(SESSIONS_TABLE)
-    .update({
-      ended_at: endedAt,
-      status: 'completed',
+    const { data, error } = await supabase
+      .from(SESSIONS_TABLE)
+      .update({
+        ended_at: endedAt,
+        status: 'completed',
+        duration_seconds: durationSeconds,
+        completed: true,
+        stopped_reason: null,
+        completed_steps: completedSteps ?? totalSteps ?? 0,
+        total_steps: totalSteps ?? 0,
+      })
+      .eq('id', sessionId)
+      .select()
+      .single()
+
+    if (error) {
+      warnAnalyticsError('Analytics: completeSession failed', error)
+      return { ok: false, data: null, error }
+    }
+
+    removeLocalStorageValue(SESSION_STARTED_AT_KEY)
+    console.info('[Analytics] completeSession sessionId', sessionId)
+    console.info('[Analytics] completeSession result', {
+      ok: true,
+      sessionId,
       duration_seconds: durationSeconds,
-      completed: true,
-      stopped_reason: null,
       completed_steps: completedSteps ?? totalSteps ?? 0,
       total_steps: totalSteps ?? 0,
     })
-    .eq('id', sessionId)
-    .select()
-    .single()
 
-  if (error) {
-    warnAnalyticsError('Analytics: completeSession failed', error)
-    return { ok: false, data: null, error }
-  }
-
-  removeLocalStorageValue(SESSION_STARTED_AT_KEY)
-  console.info('[Analytics] completeSession sessionId', sessionId)
-  console.info('[Analytics] completeSession result', {
-    ok: true,
-    sessionId,
-    duration_seconds: durationSeconds,
-    completed_steps: completedSteps ?? totalSteps ?? 0,
-    total_steps: totalSteps ?? 0,
+    return { ok: true, data, error: null }
   })
-
-  return { ok: true, data, error: null }
 }
 
 export async function stopSession({ sessionId, stoppedReason, completedSteps, totalSteps }) {
-  if (!sessionId) {
-    console.warn('Analytics skipped: no valid Supabase session id')
-    const error = new Error('Missing sessionId')
-    warnAnalyticsError('Analytics: stopSession missing sessionId', error)
-    return { ok: false, data: null, error }
-  }
+  return withLoader(async () => {
+    if (!sessionId) {
+      console.warn('Analytics skipped: no valid Supabase session id')
+      const error = new Error('Missing sessionId')
+      warnAnalyticsError('Analytics: stopSession missing sessionId', error)
+      return { ok: false, data: null, error }
+    }
 
-  const endedAt = nowIso()
-  const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
-  const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
+    const endedAt = nowIso()
+    const startedAt = getLocalStorageValue(SESSION_STARTED_AT_KEY)
+    const durationSeconds = getDurationSeconds(startedAt, endedAt) ?? 0
 
-  const { data, error } = await supabase
-    .from(SESSIONS_TABLE)
-    .update({
-      ended_at: endedAt,
-      status: 'stopped',
+    const { data, error } = await supabase
+      .from(SESSIONS_TABLE)
+      .update({
+        ended_at: endedAt,
+        status: 'stopped',
+        duration_seconds: durationSeconds,
+        completed: false,
+        stopped_reason: stoppedReason ?? 'stopped',
+        completed_steps: completedSteps ?? 0,
+        total_steps: totalSteps ?? 0,
+      })
+      .eq('id', sessionId)
+      .select()
+      .single()
+
+    if (error) {
+      warnAnalyticsError('Analytics: stopSession failed', error)
+      return { ok: false, data: null, error }
+    }
+
+    removeLocalStorageValue(SESSION_STARTED_AT_KEY)
+    console.info('[Analytics] stopSession result', {
+      ok: true,
+      sessionId,
+      stoppedReason: stoppedReason ?? 'stopped',
       duration_seconds: durationSeconds,
-      completed: false,
-      stopped_reason: stoppedReason ?? 'stopped',
       completed_steps: completedSteps ?? 0,
       total_steps: totalSteps ?? 0,
     })
-    .eq('id', sessionId)
-    .select()
-    .single()
 
-  if (error) {
-    warnAnalyticsError('Analytics: stopSession failed', error)
-    return { ok: false, data: null, error }
-  }
-
-  removeLocalStorageValue(SESSION_STARTED_AT_KEY)
-  console.info('[Analytics] stopSession result', {
-    ok: true,
-    sessionId,
-    stoppedReason: stoppedReason ?? 'stopped',
-    duration_seconds: durationSeconds,
-    completed_steps: completedSteps ?? 0,
-    total_steps: totalSteps ?? 0,
+    return { ok: true, data, error: null }
   })
-
-  return { ok: true, data, error: null }
 }

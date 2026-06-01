@@ -1,6 +1,7 @@
 import { pipeline, env } from '@xenova/transformers'
 import { detectIntent } from '../utils/detectIntent';
 import { intentToNode } from '../utils/intentToNode';
+import { withLoader } from './useAppLoader';
 
 env.allowRemoteModels = true
 env.allowLocalModels = false
@@ -11,51 +12,53 @@ let classifier = null;
 
 export function useScenarioAI() {
   async function analyzeResponse(text) {
-    // Handle empty or too short input
-    if (!text || text.length < 5) {
-      return {
-        sentiment: 'UNKNOWN',
-        confidence: 0,
-        intent: 'onduidelijk',
-        nextNode: intentToNode['onduidelijk'],
-      };
-    }
-
-    try {
-      // Load classifier only once
-      if (!classifier) {
-        classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english', {
-          device: 'wasm',
-          dtype: 'q8',
-        });
+    return withLoader(async () => {
+      // Handle empty or too short input
+      if (!text || text.length < 5) {
+        return {
+          sentiment: 'UNKNOWN',
+          confidence: 0,
+          intent: 'onduidelijk',
+          nextNode: intentToNode['onduidelijk'],
+        };
       }
 
-      const result = await classifier(text);
+      try {
+        // Load classifier only once
+        if (!classifier) {
+          classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english', {
+            device: 'wasm',
+            dtype: 'q8',
+          });
+        }
 
-      const sentiment = result[0].label;
-      const confidence = result[0].score;
+        const result = await classifier(text);
 
-      // Detect intent based on text, sentiment, and confidence
-      const intent = detectIntent(text, sentiment, confidence);
+        const sentiment = result[0].label;
+        const confidence = result[0].score;
 
-      // Get next node from intent mapping
-      const nextNode = intentToNode[intent];
+        // Detect intent based on text, sentiment, and confidence
+        const intent = detectIntent(text, sentiment, confidence);
 
-      return {
-        sentiment,
-        confidence,
-        intent,
-        nextNode,
-      };
-    } catch (error) {
-      console.error('Error analyzing response:', error);
-      return {
-        sentiment: 'UNKNOWN',
-        confidence: 0,
-        intent: 'onduidelijk',
-        nextNode: intentToNode['onduidelijk'],
-      };
-    }
+        // Get next node from intent mapping
+        const nextNode = intentToNode[intent];
+
+        return {
+          sentiment,
+          confidence,
+          intent,
+          nextNode,
+        };
+      } catch (error) {
+        console.error('Error analyzing response:', error);
+        return {
+          sentiment: 'UNKNOWN',
+          confidence: 0,
+          intent: 'onduidelijk',
+          nextNode: intentToNode['onduidelijk'],
+        };
+      }
+    });
   }
 
   return {

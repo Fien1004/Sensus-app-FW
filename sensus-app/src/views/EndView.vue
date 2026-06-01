@@ -5,12 +5,11 @@ import ScreenContainer from '../components/layout/ScreenContainer.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 import BulbIcon from '../assets/icons/bulb.svg?raw'
 import { getScenarioBySlug } from '../services/scenarioService'
-import { completeSession } from '../services/analyticsService'
 import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
-const { ensureSession, getSessionId, clearSessionId } = useAnalyticsSession()
+const { getSessionId, clearSessionId, completeCurrentSession } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const stepId = computed(() => String(route.query.step ?? ''))
@@ -67,25 +66,18 @@ onMounted(() => {
 			isLoading.value = false
 		}
 
-		await ensureSession({
-			scenarioId: scenarioId.value,
-			totalSteps: totalSteps.value,
-		})
-
-		if (analyticsSaved.value || !endStep.value) {
+		if (analyticsSaved.value || !endStep.value || !getSessionId()) {
 			return
 		}
 
-		const result = await completeSession({
-			sessionId: getSessionId(),
+		const result = await completeCurrentSession({
 			completedSteps: totalSteps.value,
 			totalSteps: totalSteps.value,
 		})
 
-		analyticsSaved.value = result.ok
+		analyticsSaved.value = result.ok || result.alreadyCompleted === true
 
-		if (result.ok) {
-			clearSessionId()
+		if (analyticsSaved.value) {
 			localStorage.removeItem('scenarioCompletedSteps')
 			localStorage.removeItem('scenarioTotalSteps')
 		}
@@ -93,6 +85,9 @@ onMounted(() => {
 })
 
 function finishScenario() {
+	clearSessionId()
+	localStorage.removeItem('scenarioCompletedSteps')
+	localStorage.removeItem('scenarioTotalSteps')
 	router.replace({ name: 'scenario-list' })
 }
 </script>

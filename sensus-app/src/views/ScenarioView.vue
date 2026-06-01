@@ -13,7 +13,7 @@ import { intentToNode } from '../utils/intentToNode'
 const route = useRoute()
 const router = useRouter()
 const { analyzeResponse } = useScenarioAI()
-const { ensureSession, getSessionId } = useAnalyticsSession()
+const { ensureSession, getSessionId, completeCurrentSession } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const slug = route.params.id
@@ -86,6 +86,10 @@ function persistScenarioProgress() {
   localStorage.setItem('scenarioCompletedSteps', String(visitedStepIds.value.length || 0))
 }
 
+function getCompletedStepCount() {
+  return visitedStepIds.value.length || totalSteps.value || 0
+}
+
 function markVisitedStep(stepId) {
   if (!stepId || stepId === 'node_fallback') {
     persistScenarioProgress()
@@ -151,7 +155,7 @@ onMounted(async () => {
 
 watchEffect(() => {
   if (currentStep.value?.type === 'reflection') {
-    router.push({ name: 'reflection', params: { id: scenarioId.value }, query: { step: currentStepId.value } })
+    void navigateToStep(currentStep.value.id)
   }
 })
 
@@ -165,7 +169,7 @@ function goBack() {
   router.push({ query: { step: baseStepId } })
 }
 
-function navigateToStep(stepId) {
+async function navigateToStep(stepId) {
   console.log('=== navigateToStep CALLED with stepId:', stepId)
 
   if (stepId === 'node_fallback') {
@@ -203,6 +207,13 @@ function navigateToStep(stepId) {
   }
   
   console.log('Pushing to router:', nextStep.id)
+
+  if (nextStep.type === 'reflection' || nextStep.type === 'end') {
+    await completeCurrentSession({
+      completedSteps: getCompletedStepCount(),
+      totalSteps: totalSteps.value,
+    })
+  }
   
   if (nextStep.type === 'reflection') {
     router.push({ name: 'reflection', params: { id: scenarioId.value }, query: { step: nextStep.id } })
@@ -235,24 +246,30 @@ async function handleChoice(option) {
     path: option?.path ?? option?.next ?? null,
     metadata: option,
   })
-  navigateToStep(next)
+  await navigateToStep(next)
 }
 
-function handleContinue() {
+async function handleContinue() {
   const next = currentStep.value?.next
   if (!next) {
     console.warn('Continue step has no next defined', currentStep.value?.id)
     return
   }
 
-  // Prefer slug from scenario meta when available, otherwise use route id
-  const routeId = scenario?.value?.slug ?? scenarioId.value
+  await startSession()
+  const activeSessionId = getSessionId()
+  if (activeSessionId) {
+    await trackEvent({
+      sessionId: activeSessionId,
+      stepId: currentStepId.value,
+      type: 'continue',
+      value: currentStep.value?.button ?? 'Volgende',
+      path: next,
+      metadata: { stepId: currentStepId.value, next },
+    })
+  }
 
-  router.push({
-    name: 'scenario',
-    params: { id: routeId },
-    query: { step: next }
-  })
+  await navigateToStep(next)
 }
 
 async function handleTextNext() {
@@ -314,7 +331,7 @@ async function handleTextNext() {
         metadata: result,
       })
       textAnswer.value = ''
-      navigateToStep('node_fallback')
+      await navigateToStep('node_fallback')
       return
     }
 
@@ -323,7 +340,7 @@ async function handleTextNext() {
     if (!activeSessionId) {
       console.warn('Analytics skipped: no valid Supabase session id')
       textAnswer.value = ''
-      navigateToStep(currentStep.value?.next)
+      await navigateToStep(currentStep.value?.next)
       return
     }
 
@@ -344,7 +361,7 @@ async function handleTextNext() {
     }
 
     textAnswer.value = ''
-    navigateToStep(next)
+    await navigateToStep(next)
   } catch (error) {
     console.error('Error analyzing response:', error)
     // Fallback to default next step on error
@@ -356,7 +373,7 @@ async function handleTextNext() {
     }
     textAnswer.value = ''
     console.log('Navigating to fallback step:', next)
-    navigateToStep(next)
+    await navigateToStep(next)
   }
 }
 
@@ -384,7 +401,7 @@ async function handleFallbackChoice(choice) {
     return
   }
 
-  navigateToStep(choice.next)
+  await navigateToStep(choice.next)
 }
 </script>
 

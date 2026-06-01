@@ -9,7 +9,7 @@ import { useAnalyticsSession } from '../composables/useAnalyticsSession'
 
 const route = useRoute()
 const router = useRouter()
-const { ensureSession, getSessionId, setActiveSessionId } = useAnalyticsSession()
+const { ensureSession, getSessionId, completeCurrentSession } = useAnalyticsSession()
 
 const scenarioId = computed(() => String(route.params.id ?? ''))
 const scenario = ref(null)
@@ -41,6 +41,17 @@ function updateStoredProgress() {
   }
 
   localStorage.setItem('scenarioTotalSteps', String(steps.length || 0))
+}
+
+function getCompletedStepCount() {
+  const steps = scenario.value?.engine_json?.steps ?? []
+  const stepIndex = steps.findIndex((step) => step.id === currentStepId.value)
+
+  if (stepIndex >= 0) {
+    return stepIndex + 1
+  }
+
+  return Number(localStorage.getItem('scenarioCompletedSteps') || 0) || steps.length || 0
 }
 
 onMounted(async () => {
@@ -99,6 +110,13 @@ async function handleNext() {
 
   const nextStep = scenario.value?.engine_json?.steps?.find((s) => s.id === nextId)
   if (!nextStep) return
+
+  if (nextStep.type === 'end') {
+    await completeCurrentSession({
+      completedSteps: getCompletedStepCount(),
+      totalSteps: scenario.value?.engine_json?.steps?.length ?? 0,
+    })
+  }
 
   if (nextStep.type === 'end') {
     router.push({ name: 'end', params: { id: scenarioId.value }, query: { step: nextId } })

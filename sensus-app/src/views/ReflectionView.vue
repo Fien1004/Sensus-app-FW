@@ -54,9 +54,25 @@ function getCompletedStepCount() {
   return Number(localStorage.getItem('scenarioCompletedSteps') || 0) || steps.length || 0
 }
 
+function showScenarioError() {
+  router.replace({
+    name: 'error',
+    query: {
+      retryTo: route.fullPath,
+      icon: 'scenario',
+    },
+  })
+}
+
 onMounted(async () => {
   try {
     scenario.value = await getScenarioBySlug(scenarioId.value)
+    if (!scenario.value || !reflectionStep.value) {
+      isLoading.value = false
+      showScenarioError()
+      return
+    }
+
     updateStoredProgress()
     await ensureSession({
       scenarioId: scenarioId.value,
@@ -69,9 +85,12 @@ onMounted(async () => {
   } catch (error) {
     console.error(error)
     scenario.value = null
-  } finally {
     isLoading.value = false
+    showScenarioError()
+    return
   }
+
+  isLoading.value = false
 })
 
 async function saveReflection() {

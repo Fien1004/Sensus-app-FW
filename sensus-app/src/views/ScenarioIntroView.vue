@@ -14,6 +14,16 @@ const isLoading = ref(true)
 const intro = computed(() => scenario.value?.engine_json?.intro ?? null)
 const firstStep = computed(() => scenario.value?.engine_json?.steps?.[0] ?? null)
 
+function showScenarioError() {
+  router.replace({
+    name: 'error',
+    query: {
+      retryTo: route.fullPath,
+      icon: 'scenario',
+    },
+  })
+}
+
 onMounted(async () => {
   try {
     const s = await getScenarioBySlug(route.params.id)
@@ -22,9 +32,18 @@ onMounted(async () => {
   } catch (err) {
     console.error(err)
     scenario.value = null
-  } finally {
     isLoading.value = false
+    showScenarioError()
+    return
   }
+
+  if (!scenario.value || !firstStep.value) {
+    isLoading.value = false
+    showScenarioError()
+    return
+  }
+
+  isLoading.value = false
 })
 
 function goBack() {

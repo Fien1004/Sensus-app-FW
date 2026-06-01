@@ -10,6 +10,11 @@ import EndView from '../views/EndView.vue'
 import SafeExitView from '../views/SafeExitView.vue'
 import StopConfirmView from '../views/StopConfirmView.vue'
 import ResumeScenarioView from '../views/ResumeScenarioView.vue'
+import ErrorView from '../views/ErrorView.vue'
+
+function getQueryString(value) {
+  return Array.isArray(value) ? value[0] : value
+}
 
 const router = createRouter({
   history: createWebHistory(),
@@ -70,6 +75,18 @@ const router = createRouter({
       path: '/resume-scenario',
       name: 'resume-scenario',
       component: ResumeScenarioView,
+    },
+    {
+      path: '/fout',
+      name: 'error',
+      component: ErrorView,
+      props: (route) => ({
+        title: getQueryString(route.query.title),
+        description: getQueryString(route.query.description),
+        extraText: getQueryString(route.query.extraText),
+        icon: getQueryString(route.query.icon),
+        retryTo: getQueryString(route.query.retryTo),
+      }),
     },
   ],
 })

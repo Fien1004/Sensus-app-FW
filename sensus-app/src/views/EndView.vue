@@ -55,6 +55,16 @@ watchEffect(() => {
 	}
 })
 
+function showScenarioError() {
+	router.replace({
+		name: 'error',
+		query: {
+			retryTo: route.fullPath,
+			icon: 'scenario',
+		},
+	})
+}
+
 onMounted(() => {
 	(async () => {
 		try {
@@ -62,9 +72,18 @@ onMounted(() => {
 		} catch (error) {
 			console.error(error)
 			scenario.value = null
-		} finally {
 			isLoading.value = false
+			showScenarioError()
+			return
 		}
+
+		if (!scenario.value || !endStep.value) {
+			isLoading.value = false
+			showScenarioError()
+			return
+		}
+
+		isLoading.value = false
 
 		if (analyticsSaved.value || !endStep.value || !getSessionId()) {
 			return

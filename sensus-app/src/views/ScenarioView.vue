@@ -132,6 +132,16 @@ async function startSession() {
   persistScenarioProgress()
 }
 
+function showScenarioError() {
+  router.replace({
+    name: 'error',
+    query: {
+      retryTo: route.fullPath,
+      icon: 'scenario',
+    },
+  })
+}
+
 onMounted(async () => {
   try {
     const s = await getScenarioBySlug(slug)
@@ -144,13 +154,19 @@ onMounted(async () => {
   } catch (err) {
     console.error('Error in onMounted:', err)
     scenario.value = null
-  } finally {
     isLoading.value = false
+    showScenarioError()
+    return
   }
 
-  if (scenario.value) {
-    await startSession()
+  if (!scenario.value) {
+    isLoading.value = false
+    showScenarioError()
+    return
   }
+
+  isLoading.value = false
+  await startSession()
 })
 
 watchEffect(() => {

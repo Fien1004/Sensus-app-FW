@@ -75,6 +75,11 @@ const classes = computed(() => [
   opacity: 1;
 }
 
+.base-button:focus-visible {
+  outline: 3px solid var(--color-secondary-200);
+  outline-offset: 3px;
+}
+
 .base-button--full {
   width: 100%;
 }

@@ -14,6 +14,7 @@ const code = ref(Array.from({ length: CODE_LENGTH }, () => ''))
 const errorMessage = ref('')
 const hasAttemptedSubmit = ref(false)
 const isValidating = ref(false)
+const lastSubmittedCode = ref('')
 const codeInputRefs = ref([])
 
 const enteredCode = computed(() =>
@@ -102,6 +103,10 @@ function focusCodeInput(index) {
 }
 
 function setCodeValue(index, value) {
+  if (code.value[index] !== value) {
+    lastSubmittedCode.value = ''
+  }
+
   code.value[index] = value
 
   if (hasAttemptedSubmit.value) {
@@ -137,6 +142,12 @@ function handleCodeInput(index, event) {
 }
 
 function handleCodeKeydown(index, event) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+    return
+  }
+
   if (event.key !== 'Backspace' || code.value[index]) {
     return
   }
@@ -144,6 +155,7 @@ function handleCodeKeydown(index, event) {
   // Ga terug naar het vorige veld als dit veld al leeg is.
   if (index > 0) {
     event.preventDefault()
+    lastSubmittedCode.value = ''
     code.value[index - 1] = ''
     focusCodeInput(index - 1)
   }
@@ -169,12 +181,19 @@ function handleCodePaste(index, event) {
 }
 
 async function goNext() {
+  const accessCode = enteredCode.value
+
+  if (isStartDisabled.value || lastSubmittedCode.value === accessCode) {
+    return
+  }
+
+  lastSubmittedCode.value = accessCode
   hasAttemptedSubmit.value = true
   errorMessage.value = ''
   isValidating.value = true
 
   try {
-    const result = await validateAccessCode(enteredCode.value)
+    const result = await validateAccessCode(accessCode)
 
     if (!result.isValid) {
       errorMessage.value = result.message
@@ -192,7 +211,7 @@ async function goNext() {
 
 <template>
   <ScreenContainer size="wide">
-    <section class="home">
+    <form class="home" @submit.prevent="goNext">
       <header class="home__header">
         <img
           :src="Logo"
@@ -225,6 +244,7 @@ async function goNext() {
               :aria-label="`Code teken ${index + 1}`"
               autocomplete="one-time-code"
               inputmode="text"
+              enterkeyhint="go"
               @input="handleCodeInput(index, $event)"
               @keydown="handleCodeKeydown(index, $event)"
               @paste="handleCodePaste(index, $event)"
@@ -249,8 +269,8 @@ async function goNext() {
         <BaseButton
           fullWidth
           size="lg"
+          type="submit"
           :disabled="isStartDisabled"
-          @click="goNext"
         >
           Start
         </BaseButton>
@@ -260,7 +280,7 @@ async function goNext() {
         </p>
 
       </footer>
-    </section>
+    </form>
   </ScreenContainer>
 </template>
 
